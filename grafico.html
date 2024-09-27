@@ -3,39 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gráfico Animado de Datos</title>
+    <title>Representación Gráfica de Datos</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: row;
+            margin: 0;
+            padding: 0;
+        }
+        #chart-container {
+            width: 70%;
+            padding: 20px;
+        }
+        #data-table {
+            width: 30%;
+            padding: 20px;
+            border-left: 2px solid #ccc;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        canvas {
+            display: block;
+            margin: auto;
+        }
+        #draggable-items {
+            margin-top: 20px;
+        }
+        .draggable {
+            display: inline-block;
+            padding: 10px;
+            border: 1px solid #333;
+            margin-right: 10px;
+            cursor: move;
+        }
+        #evaluation {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Representación Gráfica de Datos</h1>
-    <canvas id="myChart" width="400" height="200"></canvas>
 
-    <script>
-        const ctx = document.getElementById('myChart').getContext('2d');
-        const myChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'], // Etiquetas del eje X
-                datasets: [{
-                    label: 'Datos de laboratorio', // Título del gráfico
-                    data: [12, 19, 3, 5, 2], // Datos de ejemplo
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)', // Color de fondo
-                    borderColor: 'rgba(75, 192, 192, 1)', // Color de borde
-                    borderWidth: 1 // Grosor del borde
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true // Comienza el eje Y en 0
+<div id="chart-container">
+    <canvas id="myChart"></canvas>
+    <div id="draggable-items">
+        <div class="draggable" draggable="true" id="label-x">Variable Independiente (x)</div>
+        <div class="draggable" draggable="true" id="label-y">Variable Dependiente (y)</div>
+        <div class="draggable" draggable="true" id="point-1">Punto E</div>
+        <div class="draggable" draggable="true" id="point-2">Punto F</div>
+    </div>
+    <div id="evaluation">
+        <p>Puntuación: <span id="score">0%</span></p>
+    </div>
+</div>
+
+<div id="data-table">
+    <table>
+        <thead>
+            <tr>
+                <th>Letra</th>
+                <th id="col1">Variable 1 (x)</th>
+                <th id="col2">Variable 2 (y)</th>
+            </tr>
+        </thead>
+        <tbody id="table-body">
+            <!-- Data rows will be inserted here dynamically -->
+        </tbody>
+    </table>
+    <div>
+        <p>La <span id="variable1"></span> es la variable 
+            <select id="select1">
+                <option value="independiente">Independiente</option>
+                <option value="dependiente">Dependiente</option>
+            </select>
+        </p>
+        <p>La <span id="variable2"></span> es la variable 
+            <select id="select2">
+                <option value="independiente">Independiente</option>
+                <option value="dependiente">Dependiente</option>
+            </select>
+        </p>
+    </div>
+</div>
+
+<script>
+    // Posibles parejas de variables
+    const variablePairs = [
+        ['tiempo (s)', 'posición (m)'],
+        ['tiempo (s)', 'velocidad (m/s)'],
+        ['tiempo (s)', 'aceleración (m/s^2)'],
+        ['masa (g)', 'longitud (cm)'],
+        ['altura (m)', 'tiempo (s)'],
+        ['aceleración (m/s^2)', 'fuerza (N)']
+    ];
+
+    // Sorteamos una pareja al azar
+    const chosenPair = variablePairs[Math.floor(Math.random() * variablePairs.length)];
+    document.getElementById('col1').textContent = chosenPair[0];
+    document.getElementById('col2').textContent = chosenPair[1];
+
+    document.getElementById('variable1').textContent = chosenPair[0];
+    document.getElementById('variable2').textContent = chosenPair[1];
+
+    // Datos aleatorios para la tabla
+    const data = [
+        { letter: 'A', x: Math.random() * 10, y: Math.random() * 10 },
+        { letter: 'B', x: Math.random() * 10, y: Math.random() * 10 },
+        { letter: 'C', x: Math.random() * 10, y: Math.random() * 10 },
+        { letter: 'D', x: Math.random() * 10, y: Math.random() * 10 },
+        { letter: 'E', x: Math.random() * 10, y: Math.random() * 10 },
+        { letter: 'F', x: Math.random() * 10, y: Math.random() * 10 }
+    ];
+
+    // Mostrar los datos en la tabla
+    const tableBody = document.getElementById('table-body');
+    data.forEach(d => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${d.letter}</td><td>${d.x.toFixed(2)}</td><td>${d.y.toFixed(2)}</td>`;
+        tableBody.appendChild(row);
+    });
+
+    // Crear la gráfica
+    const ctx = document.getElementById('myChart').getContext('2d');
+    const randomPoints = data.sort(() => 0.5 - Math.random()).slice(0, 4);
+    const myChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: `${chosenPair[0]} vs ${chosenPair[1]}`,
+                data: randomPoints.map(d => ({x: d.x, y: d.y})),
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+                showLine: true
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    title: {
+                        display: true,
+                        text: chosenPair[0]
                     }
                 },
-                animation: {
-                    duration: 2000, // Duración de la animación en milisegundos
-                    easing: 'easeInOutBounce' // Tipo de animación
+                y: {
+                    title: {
+                        display: true,
+                        text: chosenPair[1]
+                    }
                 }
             }
+        }
+    });
+
+    // Evaluación del estudiante
+    let score = 0;
+    document.querySelectorAll('.draggable').forEach(item => {
+        item.addEventListener('dragend', () => {
+            score += 25;  // Asumimos que cada objeto arrastrado correctamente añade 25%
+            document.getElementById('score').textContent = score + '%';
         });
-    </script>
+    });
+
+</script>
 </body>
 </html>
+

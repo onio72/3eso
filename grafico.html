@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gráfico Animado de Datos</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Representación Gráfica de Datos</h1>
+    <canvas id="myChart" width="400" height="200"></canvas>
+
+    <script>
+        const ctx = document.getElementById('myChart').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'], // Etiquetas del eje X
+                datasets: [{
+                    label: 'Datos de laboratorio', // Título del gráfico
+                    data: [12, 19, 3, 5, 2], // Datos de ejemplo
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)', // Color de fondo
+                    borderColor: 'rgba(75, 192, 192, 1)', // Color de borde
+                    borderWidth: 1 // Grosor del borde
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true // Comienza el eje Y en 0
+                    }
+                },
+                animation: {
+                    duration: 2000, // Duración de la animación en milisegundos
+                    easing: 'easeInOutBounce' // Tipo de animación
+                }
+            }
+        });
+    </script>
+</body>
+</html>

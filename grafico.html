@@ -15,11 +15,14 @@
         #chart-container {
             width: 70%;
             padding: 20px;
+            box-sizing: border-box;
+            position: relative;
         }
         #data-table {
             width: 30%;
             padding: 20px;
             border-left: 2px solid #ccc;
+            box-sizing: border-box;
         }
         table {
             width: 100%;
@@ -33,32 +36,43 @@
         canvas {
             display: block;
             margin: auto;
-            width: 90%; /* Ajusta el tamaño del gráfico */
-            height: 500px; /* Aumenta la altura del gráfico */
+            width: 100%;
+            height: 500px;
         }
         #draggable-items {
             margin-top: 20px;
         }
         .draggable {
             display: inline-block;
-            padding: 10px;
+            padding: 5px 10px;
             border: 1px solid #333;
-            margin-right: 10px;
+            margin: 5px;
             cursor: move;
+            user-select: none;
         }
-        .draggable-point {
-            display: inline-block;
+        .draggable.point {
             width: 20px;
             height: 20px;
-            background-color: black;
-            color: white;
-            text-align: center;
+            background-color: red;
+            color: #fff;
             border-radius: 50%;
-            margin-right: 10px;
-            cursor: move;
+            text-align: center;
+            line-height: 20px;
+            font-weight: bold;
+        }
+        .axis-label {
+            position: absolute;
+            font-weight: bold;
+        }
+        .dragged-label {
+            position: absolute;
         }
         #evaluation {
             margin-top: 20px;
+        }
+        #label-x, #label-y {
+            left: 50%;
+            top: 10px;
         }
     </style>
 </head>
@@ -66,11 +80,16 @@
 
 <div id="chart-container">
     <canvas id="myChart"></canvas>
+    <!-- Espacios para las etiquetas de los ejes -->
+    <div id="label-x" class="axis-label"></div>
+    <div id="label-y" class="axis-label"></div>
     <div id="draggable-items">
-        <div class="draggable" draggable="true" id="label-x">Etiqueta X</div>
-        <div class="draggable" draggable="true" id="label-y">Etiqueta Y</div>
-        <div class="draggable-point" draggable="true" id="point-1">E</div>
-        <div class="draggable-point" draggable="true" id="point-2">F</div>
+        <!-- Etiquetas de las variables -->
+        <div class="draggable" draggable="true" id="var1-label"></div>
+        <div class="draggable" draggable="true" id="var2-label"></div>
+        <!-- Puntos arrastrables -->
+        <div class="draggable point" draggable="true" id="point-A">A</div>
+        <div class="draggable point" draggable="true" id="point-B">B</div>
     </div>
     <div id="evaluation">
         <p>Puntuación: <span id="score">0%</span></p>
@@ -82,22 +101,22 @@
         <thead>
             <tr>
                 <th>Letra</th>
-                <th id="col1">X</th>
-                <th id="col2">Y</th>
+                <th id="col1"></th>
+                <th id="col2"></th>
             </tr>
         </thead>
         <tbody id="table-body">
-            <!-- Data rows will be inserted here dynamically -->
+            <!-- Las filas de datos se insertarán dinámicamente -->
         </tbody>
     </table>
     <div>
-        <p>La <span id="variable1"></span> es la variable 
+        <p id="question1-text">La <span id="question1"></span> es la variable 
             <select id="select1">
                 <option value="independiente">Independiente</option>
                 <option value="dependiente">Dependiente</option>
             </select>
         </p>
-        <p>La <span id="variable2"></span> es la variable 
+        <p id="question2-text">La <span id="question2"></span> es la variable 
             <select id="select2">
                 <option value="independiente">Independiente</option>
                 <option value="dependiente">Dependiente</option>
@@ -107,52 +126,100 @@
 </div>
 
 <script>
-    // Posibles parejas de variables con proporcionalidad directa o inversa
+    // Posibles parejas de variables con relaciones directas o inversas
     const variablePairs = [
-        {x: 'tiempo (s)', y: 'posición (m)', proportionality: 'directa'},
-        {x: 'tiempo (s)', y: 'velocidad (m/s)', proportionality: 'directa'},
-        {x: 'masa (g)', y: 'longitud (cm)', proportionality: 'inversa'},
-        {x: 'altura (m)', y: 'tiempo (s)', proportionality: 'directa'},
-        {x: 'aceleración (m/s^2)', y: 'fuerza (N)', proportionality: 'directa'}
+        {
+            variables: ['tiempo (s)', 'posición (m)', 'f'],
+            relation: 'direct' // Relación directa
+        },
+        {
+            variables: ['masa (g)', 'longitud (cm)', 'f'],
+            relation: 'direct'
+        },
+        {
+            variables: ['altura (m)', 'tiempo (s)', 'f'],
+            relation: 'direct'
+        },
+        {
+            variables: ['aceleración (m/s²)', 'fuerza (N)', 'f'],
+            relation: 'direct'
+        },
+        {
+            variables: ['tiempo (s)', 'velocidad (m/s)', 'm'],
+            relation: 'inverse' // Relación inversa
+        },
+        {
+            variables: ['tiempo (s)', 'aceleración (m/s²)', 'f'],
+            relation: 'inverse'
+        }
     ];
+
+    // Función para seleccionar un artículo acorde con el género de la magnitud
+    function getArticle(variable, gender) {
+        return gender === 'f' ? 'La ' : 'El ';
+    }
 
     // Sorteamos una pareja al azar
-    const chosenPair = variablePairs[Math.floor(Math.random() * variablePairs.length)];
+    const chosenPairObj = variablePairs[Math.floor(Math.random() * variablePairs.length)];
+    const chosenPair = chosenPairObj.variables;
+    const relationType = chosenPairObj.relation;
+    const genderVar1 = chosenPair[2];
+    const genderVar2 = chosenPair[2];
 
-    document.getElementById('variable1').textContent = chosenPair.x;
-    document.getElementById('variable2').textContent = chosenPair.y;
+    // Asignamos los nombres de las variables a las etiquetas arrastrables
+    const draggableItems = [chosenPair[0], chosenPair[1]].sort(() => 0.5 - Math.random());
+    document.getElementById('var1-label').textContent = draggableItems[0];
+    document.getElementById('var2-label').textContent = draggableItems[1];
 
-    // Datos simples con relación directa o inversa
-    const data = [
-        { letter: 'A', x: 1, y: chosenPair.proportionality === 'directa' ? 2 : 10 },
-        { letter: 'B', x: 2, y: chosenPair.proportionality === 'directa' ? 4 : 5 },
-        { letter: 'C', x: 3, y: chosenPair.proportionality === 'directa' ? 6 : 3.33 },
-        { letter: 'D', x: 4, y: chosenPair.proportionality === 'directa' ? 8 : 2.5 },
-        { letter: 'E', x: 5, y: chosenPair.proportionality === 'directa' ? 10 : 2 },
-        { letter: 'F', x: 6, y: chosenPair.proportionality === 'directa' ? 12 : 1.66 }
-    ];
+    // Mostramos los nombres de las magnitudes en la cabecera de la tabla
+    document.getElementById('col1').textContent = chosenPair[0];
+    document.getElementById('col2').textContent = chosenPair[1];
+
+    // Preguntas con concordancia de género
+    document.getElementById('question1').textContent = chosenPair[0];
+    document.getElementById('question2').textContent = chosenPair[1];
+    document.getElementById('question1-text').innerHTML = getArticle(chosenPair[0], genderVar1) + '<span id="question1">' + chosenPair[0] + '</span> es la variable ';
+    document.getElementById('question2-text').innerHTML = getArticle(chosenPair[1], genderVar2) + '<span id="question2">' + chosenPair[1] + '</span> es la variable ';
+
+    // Generamos datos que tengan una relación directa o inversa
+    const dataPoints = [];
+    for (let i = 0; i < 6; i++) {
+        let x, y;
+        if (relationType === 'direct') {
+            x = (i + 1);
+            y = x * (Math.random() * 2 + 1); // y es proporcional a x
+        } else {
+            x = (i + 1);
+            y = (1 / x) * (Math.random() * 10 + 1); // y es inversamente proporcional a x
+        }
+        // Redondeamos los valores para simplificar
+        x = Math.round(x * 2) / 2; // Valores con precisión de 0.5
+        y = Math.round(y * 2) / 2;
+        dataPoints.push({ letter: String.fromCharCode(65 + i), x: x, y: y });
+    }
 
     // Mostrar los datos en la tabla
     const tableBody = document.getElementById('table-body');
-    data.forEach(d => {
+    dataPoints.forEach(d => {
         const row = document.createElement('tr');
-        row.innerHTML = `<td>${d.letter}</td><td>${d.x}</td><td>${d.y.toFixed(2)}</td>`;
+        row.innerHTML = `<td>${d.letter}</td><td>${d.x}</td><td>${d.y}</td>`;
         tableBody.appendChild(row);
     });
 
+    // Crear la gráfica con los puntos C, D, E y F
+    const chartDataPoints = dataPoints.slice(2); // Puntos C, D, E y F
+
     // Crear la gráfica
     const ctx = document.getElementById('myChart').getContext('2d');
-    const randomPoints = data.sort(() => 0.5 - Math.random()).slice(0, 4);
     const myChart = new Chart(ctx, {
         type: 'scatter',
         data: {
             datasets: [{
-                label: `${chosenPair.x} vs ${chosenPair.y}`,
-                data: randomPoints.map(d => ({x: d.x, y: d.y})),
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
+                label: '',
+                data: chartDataPoints.map(d => ({ x: d.x, y: d.y })),
+                backgroundColor: 'blue',
                 borderWidth: 1,
-                showLine: true
+                pointRadius: 4
             }]
         },
         options: {
@@ -161,31 +228,125 @@
                     type: 'linear',
                     position: 'bottom',
                     title: {
-                        display: true,
-                        text: chosenPair.x
+                        display: false,
+                        text: ''
                     }
                 },
                 y: {
                     title: {
-                        display: true,
-                        text: chosenPair.y
+                        display: false,
+                        text: ''
                     }
                 }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            animation: {
+                duration: 1000
+            }
+        }
+    });
+
+    // Funcionalidad de arrastrar y soltar
+    let draggedItem = null;
+
+    document.querySelectorAll('.draggable').forEach(item => {
+        item.addEventListener('dragstart', function (e) {
+            draggedItem = e.target;
+        });
+    });
+
+    // Etiquetas de los ejes
+    const labelX = document.getElementById('label-x');
+    const labelY = document.getElementById('label-y');
+
+    labelX.addEventListener('dragover', function (e) {
+        e.preventDefault();
+    });
+    labelY.addEventListener('dragover', function (e) {
+        e.preventDefault();
+    });
+
+    labelX.addEventListener('drop', function (e) {
+        e.preventDefault();
+        if (draggedItem && draggedItem.id === 'var1-label') {
+            labelX.textContent = draggedItem.textContent;
+            draggedItem.style.position = 'absolute';
+            draggedItem.style.top = `${e.clientY}px`;
+            draggedItem.style.left = `${e.clientX}px`;
+            document.getElementById('chart-container').appendChild(draggedItem);
+            updateScore(25);
+        }
+    });
+
+    labelY.addEventListener('drop', function (e) {
+        e.preventDefault();
+        if (draggedItem && draggedItem.id === 'var2-label') {
+            labelY.textContent = draggedItem.textContent;
+            draggedItem.style.position = 'absolute';
+            draggedItem.style.top = `${e.clientY}px`;
+            draggedItem.style.left = `${e.clientX}px`;
+            document.getElementById('chart-container').appendChild(draggedItem);
+            updateScore(25);
+        }
+    });
+
+    // Añadir puntos arrastrables a la gráfica
+    const chartArea = document.getElementById('chart-container');
+
+    chartArea.addEventListener('dragover', function (e) {
+        e.preventDefault();
+    });
+
+    chartArea.addEventListener('drop', function (e) {
+        e.preventDefault();
+        if (draggedItem && draggedItem.classList.contains('point')) {
+            const rect = ctx.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Convertir coordenadas de pantalla a valores de datos
+            const xValue = myChart.scales.x.getValueForPixel(x);
+            const yValue = myChart.scales.y.getValueForPixel(y);
+
+            // Verificar si el punto está cerca de donde debería estar
+            const pointData = dataPoints.find(d => d.letter === draggedItem.textContent);
+            const tolerance = 0.5; // Tolerancia de 0.5 unidades
+
+            if (Math.abs(xValue - pointData.x) <= tolerance && Math.abs(yValue - pointData.y) <= tolerance) {
+                // Añadir el punto a la gráfica
+                myChart.data.datasets[0].data.push({ x: pointData.x, y: pointData.y });
+                myChart.update();
+                draggedItem.style.position = 'absolute';
+                draggedItem.style.top = `${e.clientY}px`;
+                draggedItem.style.left = `${e.clientX}px`;
+                document.getElementById('chart-container').appendChild(draggedItem);
+                updateScore(25);
             }
         }
     });
 
     // Evaluación del estudiante
     let score = 0;
-    document.querySelectorAll('.draggable, .draggable-point').forEach(item => {
-        item.addEventListener('dragend', () => {
-            score += 25;  // Asumimos que cada objeto arrastrado correctamente añade 25%
-            document.getElementById('score').textContent = score + '%';
-        });
-    });
+    function updateScore(points) {
+        score += points;
+        if (score > 100) score = 100;
+        document.getElementById('score').textContent = score + '%';
+    }
 
+    // Manejo de las preguntas de variable dependiente e independiente
+    const variables = [chosenPair[0], chosenPair[1]];
+    // Orden aleatorio de las preguntas
+    if (Math.random() > 0.5) {
+        document.getElementById('question1').textContent = variables[0];
+        document.getElementById('question2').textContent = variables[1];
+    } else {
+        document.getElementById('question1').textContent = variables[1];
+        document.getElementById('question2').textContent = variables[0];
+    }
 </script>
 </body>
 </html>
-
-

@@ -50,15 +50,27 @@
             user-select: none;
             background-color: transparent; /* Sin borde visible */
         }
-        .cross {
+        .point-red {
             width: 10px;
             height: 10px;
+            background-color: red;
+            border-radius: 50%;
             display: inline-block;
-            background-color: transparent;
-            border-left: 2px solid red;
-            border-bottom: 2px solid red;
-            transform: rotate(45deg);
             margin-right: 5px;
+        }
+        .point-blue {
+            width: 10px;
+            height: 10px;
+            background-color: blue;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .highlighted-red td {
+            background-color: rgba(255, 0, 0, 0.2);
+        }
+        .highlighted-blue td {
+            background-color: rgba(0, 0, 255, 0.2);
         }
         #evaluation {
             margin-top: 20px;
@@ -87,25 +99,57 @@
             left: -60px; /* Más espacio en blanco */
             transform: translateY(-50%) rotate(-90deg);
         }
+        /* Rectángulos punteados para las etiquetas */
+        .dashed-rectangle {
+            border: 2px dashed grey;
+            position: absolute;
+        }
+        #rect-x {
+            bottom: -80px;
+            left: 40%;
+            width: 150px;
+            height: 40px;
+        }
+        #rect-y {
+            top: 20px;
+            left: -80px;
+            width: 40px;
+            height: 150px;
+        }
+        /* Mensaje parpadeante */
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        #instructions {
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 20px;
+            animation: blink 1s infinite;
+        }
     </style>
 </head>
 <body>
 
 <div id="chart-container">
+    <div id="instructions">Lee los datos de la tabla e indica qué tipo de variable es cada magnitud.</div>
     <canvas id="myChart"></canvas>
     <!-- Espacios para las etiquetas de los ejes -->
     <div id="label-x" class="axis-label"></div>
     <div id="label-y" class="axis-label"></div>
+    <div id="rect-x" class="dashed-rectangle"></div>
+    <div id="rect-y" class="dashed-rectangle"></div>
     <div id="draggable-items">
         <!-- Etiquetas de las variables -->
         <div class="draggable" draggable="true" id="var1-label"></div>
         <div class="draggable" draggable="true" id="var2-label"></div>
-        <!-- Puntos arrastrables como cruces -->
+        <!-- Puntos arrastrables -->
         <div class="draggable point" draggable="true" id="point-A">
-            <div class="cross"></div><span>A</span>
+            <div class="point-red"></div><span>A</span>
         </div>
         <div class="draggable point" draggable="true" id="point-B">
-            <div class="cross"></div><span>B</span>
+            <div class="point-blue"></div><span>B</span>
         </div>
     </div>
     <div id="evaluation">
@@ -149,17 +193,16 @@
     const variablePairs = [
         { variables: ['tiempo (s)', 'posición (m)', 'f'], relation: 'direct' },
         { variables: ['masa (g)', 'longitud (cm)', 'f'], relation: 'direct' },
-        { variables: ['altura (m)', 'tiempo (s)', 'f'], relation: 'direct' },
+        { variables: ['altura (m)', 'tiempo (s)', 'f'], relation: 'sqrt' },
         { variables: ['aceleración (m/s²)', 'fuerza (N)', 'f'], relation: 'direct' },
-        { variables: ['tiempo (s)', 'velocidad (m/s)', 'm'], relation: 'inverse' },
-        { variables: ['tiempo (s)', 'aceleración (m/s²)', 'f'], relation: 'inverse' }
+        { variables: ['tiempo (s)', 'velocidad (m/s)', 'm'], relation: 'constant' },
+        { variables: ['tiempo (s)', 'aceleración (m/s²)', 'f'], relation: 'constant' },
+        { variables: ['presión (Pa)', 'volumen (m³)', 'm'], relation: 'inverse' }
     ];
 
     const chosenPairObj = variablePairs[Math.floor(Math.random() * variablePairs.length)];
     const chosenPair = chosenPairObj.variables;
     const relationType = chosenPairObj.relation;
-    const genderVar1 = chosenPair[2];
-    const genderVar2 = chosenPair[2];
 
     const draggableItems = [chosenPair[0], chosenPair[1]].sort(() => 0.5 - Math.random());
     document.getElementById('var1-label').textContent = draggableItems[0];
@@ -174,12 +217,23 @@
     const dataPoints = [];
     for (let i = 0; i < 6; i++) {
         let x, y;
-        if (relationType === 'direct') {
-            x = (i + 1);
-            y = x * (Math.random() * 2 + 1);
-        } else {
-            x = (i + 1);
-            y = (1 / x) * (Math.random() * 10 + 1);
+        switch(relationType) {
+            case 'direct':
+                x = (i + 1) * 10;
+                y = x * (Math.random() * 2 + 1);
+                break;
+            case 'sqrt':
+                x = (i + 1) * 10;
+                y = Math.sqrt(x);
+                break;
+            case 'constant':
+                x = (i + 1) * 10;
+                y = Math.random() * 10 + 5;
+                break;
+            case 'inverse':
+                x = (i + 1) * 10;
+                y = 100 / x;
+                break;
         }
         x = Math.round(x * 2) / 2;
         y = Math.round(y * 2) / 2;
@@ -187,9 +241,15 @@
     }
 
     const tableBody = document.getElementById('table-body');
-    dataPoints.forEach(d => {
+    dataPoints.forEach((d, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `<td>${d.letter}</td><td>${d.x}</td><td>${d.y}</td>`;
+        // Colorea las filas según el punto (rojo para A, azul para B)
+        if (index === 0) {
+            row.classList.add('highlighted-red');
+        } else if (index === 1) {
+            row.classList.add('highlighted-blue');
+        }
         tableBody.appendChild(row);
     });
 
@@ -202,9 +262,12 @@
             datasets: [{
                 label: '',
                 data: chartDataPoints.map(d => ({ x: d.x, y: d.y })),
-                backgroundColor: 'blue',
+                backgroundColor: 'black',
+                borderColor: 'black',
                 borderWidth: 1,
-                pointRadius: 4
+                pointRadius: 5,
+                showLine: true,
+                fill: false,
             }]
         },
         options: {
@@ -251,24 +314,76 @@
             draggedItem.style.zIndex = 1000;
             chartContainer.appendChild(draggedItem);
         }
+        checkProgress();
     });
 
+    // Mensaje parpadeante con instrucciones
+    let instructionStep = 1;
+    const instructions = document.getElementById('instructions');
+
+    function updateInstructions() {
+        if (instructionStep === 1) {
+            instructions.textContent = 'Arrastra las etiquetas de los ejes a su lugar correcto.';
+        } else if (instructionStep === 2) {
+            instructions.textContent = 'Arrastra los puntos A y B hasta su lugar correcto en la gráfica.';
+        } else {
+            instructions.style.display = 'none';
+        }
+    }
+
+    function checkProgress() {
+        if (instructionStep === 1 && document.getElementById('select1').value !== 'Sin responder' &&
+            document.getElementById('select2').value !== 'Sin responder') {
+            instructionStep = 2;
+            updateInstructions();
+        }
+    }
+
     const checkButton = document.getElementById('check-button');
-    checkButton.addEventListener('click', function() {
+    checkButton.addEventListener('click', function () {
         let score = 0;
 
-        if (document.getElementById('label-x').textContent === chosenPair[0]) score += 25;
-        if (document.getElementById('label-y').textContent === chosenPair[1]) score += 25;
+        const labelX = document.getElementById('label-x');
+        const labelY = document.getElementById('label-y');
 
-        const select1 = document.getElementById('select1').value;
-        const select2 = document.getElementById('select2').value;
+        // Verificar si las etiquetas están dentro de los rectángulos correctos
+        const rectX = document.getElementById('rect-x').getBoundingClientRect();
+        const rectY = document.getElementById('rect-y').getBoundingClientRect();
+        const labelXPos = labelX.getBoundingClientRect();
+        const labelYPos = labelY.getBoundingClientRect();
 
-        if ((select1 === 'independiente' && select2 === 'dependiente') ||
-            (select1 === 'dependiente' && select2 === 'independiente')) {
-            score += 50;
+        if (labelXPos.left >= rectX.left * 0.95 && labelXPos.right <= rectX.right * 1.05 &&
+            labelXPos.top >= rectX.top * 0.95 && labelXPos.bottom <= rectX.bottom * 1.05) {
+            score += 25;
         }
 
+        if (labelYPos.left >= rectY.left * 0.95 && labelYPos.right <= rectY.right * 1.05 &&
+            labelYPos.top >= rectY.top * 0.95 && labelYPos.bottom <= rectY.bottom * 1.05) {
+            score += 25;
+        }
+
+        // Evaluar los puntos A y B
+        const pointA = document.getElementById('point-A');
+        const pointB = document.getElementById('point-B');
+        const pointsData = [dataPoints[0], dataPoints[1]]; // Datos de A y B
+
+        pointsData.forEach((point, index) => {
+            const draggedPoint = index === 0 ? pointA : pointB;
+            const draggedPos = draggedPoint.getBoundingClientRect();
+            const xValue = myChart.scales.x.getValueForPixel(draggedPos.left);
+            const yValue = myChart.scales.y.getValueForPixel(draggedPos.top);
+
+            if (Math.abs(xValue - point.x) <= point.x * 0.05 && Math.abs(yValue - point.y) <= point.y * 0.05) {
+                score += 25;
+            }
+        });
+
+        // Mostrar la puntuación final
         document.getElementById('score').textContent = score + '%';
+
+        if (score === 100) {
+            instructions.textContent = "¡Has completado el ejercicio correctamente!";
+        }
     });
 </script>
 

@@ -49,10 +49,7 @@
             margin: 5px;
             cursor: move;
             user-select: none;
-        }
-        .draggable.point {
-            display: flex;
-            align-items: center;
+            background-color: #f9f9f9;
         }
         .cross {
             width: 10px;
@@ -78,10 +75,18 @@
         #check-button:hover {
             background-color: #45a049;
         }
-        /* Ajuste para el texto no visible */
-        .draggable {
-            background-color: #f9f9f9;
-            border: 1px solid #ccc;
+        /* Estilo para asegurar espacio para etiquetas */
+        #label-x {
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        #label-y {
+            position: absolute;
+            top: 0;
+            left: -40px;
+            transform: translateY(-50%) rotate(-90deg);
         }
     </style>
 </head>
@@ -205,8 +210,16 @@
         },
         options: {
             scales: {
-                x: { type: 'linear', position: 'bottom', title: { display: false } },
-                y: { title: { display: false } }
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    title: { display: false },
+                    beginAtZero: true
+                },
+                y: {
+                    title: { display: false },
+                    beginAtZero: true
+                }
             },
             plugins: { legend: { display: false } },
             animation: { duration: 1000 }

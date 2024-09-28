@@ -24,6 +24,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            text-align: center;
         }
         th, td {
             border: 1px solid #ddd;
@@ -32,6 +33,8 @@
         canvas {
             display: block;
             margin: auto;
+            width: 90%; /* Ajusta el tamaño del gráfico */
+            height: 500px; /* Aumenta la altura del gráfico */
         }
         #draggable-items {
             margin-top: 20px;
@@ -40,6 +43,17 @@
             display: inline-block;
             padding: 10px;
             border: 1px solid #333;
+            margin-right: 10px;
+            cursor: move;
+        }
+        .draggable-point {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-color: black;
+            color: white;
+            text-align: center;
+            border-radius: 50%;
             margin-right: 10px;
             cursor: move;
         }
@@ -53,10 +67,10 @@
 <div id="chart-container">
     <canvas id="myChart"></canvas>
     <div id="draggable-items">
-        <div class="draggable" draggable="true" id="label-x">Variable Independiente (x)</div>
-        <div class="draggable" draggable="true" id="label-y">Variable Dependiente (y)</div>
-        <div class="draggable" draggable="true" id="point-1">Punto E</div>
-        <div class="draggable" draggable="true" id="point-2">Punto F</div>
+        <div class="draggable" draggable="true" id="label-x">Etiqueta X</div>
+        <div class="draggable" draggable="true" id="label-y">Etiqueta Y</div>
+        <div class="draggable-point" draggable="true" id="point-1">E</div>
+        <div class="draggable-point" draggable="true" id="point-2">F</div>
     </div>
     <div id="evaluation">
         <p>Puntuación: <span id="score">0%</span></p>
@@ -68,8 +82,8 @@
         <thead>
             <tr>
                 <th>Letra</th>
-                <th id="col1">Variable 1 (x)</th>
-                <th id="col2">Variable 2 (y)</th>
+                <th id="col1">X</th>
+                <th id="col2">Y</th>
             </tr>
         </thead>
         <tbody id="table-body">
@@ -93,39 +107,36 @@
 </div>
 
 <script>
-    // Posibles parejas de variables
+    // Posibles parejas de variables con proporcionalidad directa o inversa
     const variablePairs = [
-        ['tiempo (s)', 'posición (m)'],
-        ['tiempo (s)', 'velocidad (m/s)'],
-        ['tiempo (s)', 'aceleración (m/s^2)'],
-        ['masa (g)', 'longitud (cm)'],
-        ['altura (m)', 'tiempo (s)'],
-        ['aceleración (m/s^2)', 'fuerza (N)']
+        {x: 'tiempo (s)', y: 'posición (m)', proportionality: 'directa'},
+        {x: 'tiempo (s)', y: 'velocidad (m/s)', proportionality: 'directa'},
+        {x: 'masa (g)', y: 'longitud (cm)', proportionality: 'inversa'},
+        {x: 'altura (m)', y: 'tiempo (s)', proportionality: 'directa'},
+        {x: 'aceleración (m/s^2)', y: 'fuerza (N)', proportionality: 'directa'}
     ];
 
     // Sorteamos una pareja al azar
     const chosenPair = variablePairs[Math.floor(Math.random() * variablePairs.length)];
-    document.getElementById('col1').textContent = chosenPair[0];
-    document.getElementById('col2').textContent = chosenPair[1];
 
-    document.getElementById('variable1').textContent = chosenPair[0];
-    document.getElementById('variable2').textContent = chosenPair[1];
+    document.getElementById('variable1').textContent = chosenPair.x;
+    document.getElementById('variable2').textContent = chosenPair.y;
 
-    // Datos aleatorios para la tabla
+    // Datos simples con relación directa o inversa
     const data = [
-        { letter: 'A', x: Math.random() * 10, y: Math.random() * 10 },
-        { letter: 'B', x: Math.random() * 10, y: Math.random() * 10 },
-        { letter: 'C', x: Math.random() * 10, y: Math.random() * 10 },
-        { letter: 'D', x: Math.random() * 10, y: Math.random() * 10 },
-        { letter: 'E', x: Math.random() * 10, y: Math.random() * 10 },
-        { letter: 'F', x: Math.random() * 10, y: Math.random() * 10 }
+        { letter: 'A', x: 1, y: chosenPair.proportionality === 'directa' ? 2 : 10 },
+        { letter: 'B', x: 2, y: chosenPair.proportionality === 'directa' ? 4 : 5 },
+        { letter: 'C', x: 3, y: chosenPair.proportionality === 'directa' ? 6 : 3.33 },
+        { letter: 'D', x: 4, y: chosenPair.proportionality === 'directa' ? 8 : 2.5 },
+        { letter: 'E', x: 5, y: chosenPair.proportionality === 'directa' ? 10 : 2 },
+        { letter: 'F', x: 6, y: chosenPair.proportionality === 'directa' ? 12 : 1.66 }
     ];
 
     // Mostrar los datos en la tabla
     const tableBody = document.getElementById('table-body');
     data.forEach(d => {
         const row = document.createElement('tr');
-        row.innerHTML = `<td>${d.letter}</td><td>${d.x.toFixed(2)}</td><td>${d.y.toFixed(2)}</td>`;
+        row.innerHTML = `<td>${d.letter}</td><td>${d.x}</td><td>${d.y.toFixed(2)}</td>`;
         tableBody.appendChild(row);
     });
 
@@ -136,7 +147,7 @@
         type: 'scatter',
         data: {
             datasets: [{
-                label: `${chosenPair[0]} vs ${chosenPair[1]}`,
+                label: `${chosenPair.x} vs ${chosenPair.y}`,
                 data: randomPoints.map(d => ({x: d.x, y: d.y})),
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
                 borderColor: 'rgba(75, 192, 192, 1)',
@@ -151,13 +162,13 @@
                     position: 'bottom',
                     title: {
                         display: true,
-                        text: chosenPair[0]
+                        text: chosenPair.x
                     }
                 },
                 y: {
                     title: {
                         display: true,
-                        text: chosenPair[1]
+                        text: chosenPair.y
                     }
                 }
             }
@@ -166,7 +177,7 @@
 
     // Evaluación del estudiante
     let score = 0;
-    document.querySelectorAll('.draggable').forEach(item => {
+    document.querySelectorAll('.draggable, .draggable-point').forEach(item => {
         item.addEventListener('dragend', () => {
             score += 25;  // Asumimos que cada objeto arrastrado correctamente añade 25%
             document.getElementById('score').textContent = score + '%';
@@ -176,4 +187,5 @@
 </script>
 </body>
 </html>
+
 

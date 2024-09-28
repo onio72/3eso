@@ -13,13 +13,13 @@
             padding: 0;
         }
         #chart-container {
-            width: 65%; /* Más estrecha */
+            width: 65%;
             padding: 20px;
             box-sizing: border-box;
             position: relative;
         }
         #data-table {
-            width: 35%; /* Más ancho para dar más espacio a la tabla */
+            width: 35%;
             padding: 20px;
             border-left: 2px solid #ccc;
             box-sizing: border-box;
@@ -37,7 +37,7 @@
             display: block;
             margin: auto;
             width: 100%;
-            height: 400px; /* Menos alta */
+            height: 350px; /* Ajuste de altura */
         }
         #draggable-items {
             margin-top: 20px;
@@ -51,46 +51,21 @@
             user-select: none;
         }
         .draggable.point {
-            width: 20px;
-            height: 20px;
-            background-color: red;
-            color: #fff;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 20px;
-            font-weight: bold;
-        }
-        .axis-label {
-            position: absolute;
-            font-weight: bold;
-        }
-        .dragged-label {
-            position: absolute;
+            display: flex;
+            align-items: center;
         }
         .cross {
-            width: 30px;
-            height: 30px;
+            width: 10px;
+            height: 10px;
             display: inline-block;
-            position: relative;
-            transform: rotate(45deg); /* Giramos la cruz */
-            background-color: red;
-        }
-        .cross span {
-            position: absolute;
-            color: #fff;
-            font-weight: bold;
-            top: -25px;
-            left: 25px;
+            background-color: transparent;
+            border-left: 2px solid red;
+            border-bottom: 2px solid red;
+            transform: rotate(45deg);
+            margin-right: 5px;
         }
         #evaluation {
             margin-top: 20px;
-        }
-        /* Zona clicable más grande para los puntos */
-        .draggable-point {
-            padding: 10px;
-            cursor: move;
-            display: inline-flex;
-            align-items: center;
         }
         #check-button {
             margin-top: 20px;
@@ -102,6 +77,11 @@
         }
         #check-button:hover {
             background-color: #45a049;
+        }
+        /* Ajuste para el texto no visible */
+        .draggable {
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
         }
     </style>
 </head>
@@ -117,10 +97,10 @@
         <div class="draggable" draggable="true" id="var1-label"></div>
         <div class="draggable" draggable="true" id="var2-label"></div>
         <!-- Puntos arrastrables como cruces -->
-        <div class="draggable draggable-point" draggable="true" id="point-A">
+        <div class="draggable point" draggable="true" id="point-A">
             <div class="cross"></div><span>A</span>
         </div>
-        <div class="draggable draggable-point" draggable="true" id="point-B">
+        <div class="draggable point" draggable="true" id="point-B">
             <div class="cross"></div><span>B</span>
         </div>
     </div>
@@ -162,91 +142,55 @@
 </div>
 
 <script>
-    // Posibles parejas de variables con relaciones directas o inversas
     const variablePairs = [
-        {
-            variables: ['tiempo (s)', 'posición (m)', 'f'],
-            relation: 'direct' // Relación directa
-        },
-        {
-            variables: ['masa (g)', 'longitud (cm)', 'f'],
-            relation: 'direct'
-        },
-        {
-            variables: ['altura (m)', 'tiempo (s)', 'f'],
-            relation: 'direct'
-        },
-        {
-            variables: ['aceleración (m/s²)', 'fuerza (N)', 'f'],
-            relation: 'direct'
-        },
-        {
-            variables: ['tiempo (s)', 'velocidad (m/s)', 'm'],
-            relation: 'inverse' // Relación inversa
-        },
-        {
-            variables: ['tiempo (s)', 'aceleración (m/s²)', 'f'],
-            relation: 'inverse'
-        }
+        { variables: ['tiempo (s)', 'posición (m)', 'f'], relation: 'direct' },
+        { variables: ['masa (g)', 'longitud (cm)', 'f'], relation: 'direct' },
+        { variables: ['altura (m)', 'tiempo (s)', 'f'], relation: 'direct' },
+        { variables: ['aceleración (m/s²)', 'fuerza (N)', 'f'], relation: 'direct' },
+        { variables: ['tiempo (s)', 'velocidad (m/s)', 'm'], relation: 'inverse' },
+        { variables: ['tiempo (s)', 'aceleración (m/s²)', 'f'], relation: 'inverse' }
     ];
 
-    // Función para seleccionar un artículo acorde con el género de la magnitud
-    function getArticle(variable, gender) {
-        return gender === 'f' ? 'La ' : 'El ';
-    }
-
-    // Sorteamos una pareja al azar
     const chosenPairObj = variablePairs[Math.floor(Math.random() * variablePairs.length)];
     const chosenPair = chosenPairObj.variables;
     const relationType = chosenPairObj.relation;
     const genderVar1 = chosenPair[2];
     const genderVar2 = chosenPair[2];
 
-    // Asignamos los nombres de las variables a las etiquetas arrastrables
     const draggableItems = [chosenPair[0], chosenPair[1]].sort(() => 0.5 - Math.random());
     document.getElementById('var1-label').textContent = draggableItems[0];
     document.getElementById('var2-label').textContent = draggableItems[1];
 
-    // Mostramos los nombres de las magnitudes en la cabecera de la tabla
     document.getElementById('col1').textContent = chosenPair[0];
     document.getElementById('col2').textContent = chosenPair[1];
 
-    // Preguntas con concordancia de género
     document.getElementById('question1').textContent = chosenPair[0];
     document.getElementById('question2').textContent = chosenPair[1];
-    document.getElementById('question1-text').innerHTML = getArticle(chosenPair[0], genderVar1) + '<span id="question1">' + chosenPair[0] + '</span> es la variable ';
-    document.getElementById('question2-text').innerHTML = getArticle(chosenPair[1], genderVar2) + '<span id="question2">' + chosenPair[1] + '</span> es la variable ';
 
-    // Generamos datos que tengan una relación directa o inversa
     const dataPoints = [];
     for (let i = 0; i < 6; i++) {
         let x, y;
         if (relationType === 'direct') {
             x = (i + 1);
-            y = x * (Math.random() * 2 + 1); // y es proporcional a x
+            y = x * (Math.random() * 2 + 1);
         } else {
             x = (i + 1);
-            y = (1 / x) * (Math.random() * 10 + 1); // y es inversamente proporcional a x
+            y = (1 / x) * (Math.random() * 10 + 1);
         }
-        // Redondeamos los valores para simplificar
-        x = Math.round(x * 2) / 2; // Valores con precisión de 0.5
+        x = Math.round(x * 2) / 2;
         y = Math.round(y * 2) / 2;
         dataPoints.push({ letter: String.fromCharCode(65 + i), x: x, y: y });
     }
 
-    // Mostrar los datos en la tabla
     const tableBody = document.getElementById('table-body');
-    dataPoints.forEach(d =>
     dataPoints.forEach(d => {
         const row = document.createElement('tr');
         row.innerHTML = `<td>${d.letter}</td><td>${d.x}</td><td>${d.y}</td>`;
         tableBody.appendChild(row);
     });
 
-    // Crear la gráfica con los puntos C, D, E y F
-    const chartDataPoints = dataPoints.slice(2); // Puntos C, D, E y F
+    const chartDataPoints = dataPoints.slice(2);
 
-    // Crear la gráfica
     const ctx = document.getElementById('myChart').getContext('2d');
     const myChart = new Chart(ctx, {
         type: 'scatter',
@@ -261,31 +205,14 @@
         },
         options: {
             scales: {
-                x: {
-                    type: 'linear',
-                    position: 'bottom',
-                    title: {
-                        display: false
-                    }
-                },
-                y: {
-                    title: {
-                        display: false
-                    }
-                }
+                x: { type: 'linear', position: 'bottom', title: { display: false } },
+                y: { title: { display: false } }
             },
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            animation: {
-                duration: 1000
-            }
+            plugins: { legend: { display: false } },
+            animation: { duration: 1000 }
         }
     });
 
-    // Funcionalidad de arrastrar y soltar
     let draggedItem = null;
     document.querySelectorAll('.draggable').forEach(item => {
         item.addEventListener('dragstart', function (e) {
@@ -325,16 +252,13 @@
         }
     });
 
-    // Evaluación del estudiante
     const checkButton = document.getElementById('check-button');
     checkButton.addEventListener('click', function() {
         let score = 0;
 
-        // Evaluar si las etiquetas de los ejes están en los lugares correctos
         if (labelX.textContent === chosenPair[0]) score += 25;
         if (labelY.textContent === chosenPair[1]) score += 25;
 
-        // Evaluar las respuestas de los desplegables
         const select1 = document.getElementById('select1').value;
         const select2 = document.getElementById('select2').value;
 
@@ -343,7 +267,6 @@
             score += 50;
         }
 
-        // Mostrar la puntuación final
         document.getElementById('score').textContent = score + '%';
     });
 </script>

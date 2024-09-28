@@ -105,13 +105,13 @@
         }
         #rect-x {
             bottom: -80px;
-            left: 35%;
+            right: 0;
             width: 150px;
             height: 40px;
         }
         #rect-y {
-            top: 20px;
-            left: -100px;
+            top: 0;
+            left: 0;
             width: 40px;
             height: 150px;
         }
@@ -251,7 +251,7 @@
         tableBody.appendChild(row);
     });
 
-    const chartDataPoints = dataPoints.slice(2);
+    const chartDataPoints = dataPoints.filter((_, index) => !randomIndexes.includes(index)); // Filtrar los 4 puntos restantes
 
     const ctx = document.getElementById('myChart').getContext('2d');
     const myChart = new Chart(ctx, {
@@ -285,6 +285,23 @@
             animation: { duration: 1000 }
         }
     });
+
+    // Dibujar círculos sin relleno en los puntos sorteados
+    randomIndexes.forEach(index => {
+        const { x, y } = dataPoints[index];
+        myChart.data.datasets.push({
+            type: 'scatter',
+            data: [{ x, y }],
+            backgroundColor: 'transparent',
+            borderColor: 'black',
+            borderWidth: 2,
+            pointRadius: 6,
+            showLine: false,
+            fill: false,
+        });
+    });
+
+    myChart.update();
 
     let draggedItem = null;
     let offsetX = 0;
@@ -356,12 +373,12 @@
 
         if (labelXPos.left >= rectX.left * 0.95 && labelXPos.right <= rectX.right * 1.05 &&
             labelXPos.top >= rectX.top * 0.95 && labelXPos.bottom <= rectX.bottom * 1.05) {
-            score += 25;
+            score += 16.6;
         }
 
         if (labelYPos.left >= rectY.left * 0.95 && labelYPos.right <= rectY.right * 1.05 &&
             labelYPos.top >= rectY.top * 0.95 && labelYPos.bottom <= rectY.bottom * 1.05) {
-            score += 25;
+            score += 16.6;
         }
 
         // Evaluar los puntos A y B
@@ -376,12 +393,17 @@
             const yValue = myChart.scales.y.getValueForPixel(draggedPos.top);
 
             if (Math.abs(xValue - point.x) <= point.x * 0.05 && Math.abs(yValue - point.y) <= point.y * 0.05) {
-                score += 25;
+                score += 16.6;
             }
         });
 
+        // Verificar las respuestas de los desplegables
+        if (document.getElementById('select1').value !== "Sin responder" && document.getElementById('select2').value !== "Sin responder") {
+            score += 33.2; // 16.6% por cada respuesta correcta
+        }
+
         // Mostrar la puntuación final
-        document.getElementById('score').textContent = score + '%';
+        document.getElementById('score').textContent = score.toFixed(1) + '%';
 
         if (score === 100) {
             document.getElementById('instructions').textContent = "¡Has completado el ejercicio correctamente!";

@@ -37,7 +37,7 @@
             display: block;
             margin: auto;
             width: 100%;
-            height: 350px;
+            height: 400px;
         }
         #draggable-items {
             margin-top: 20px;
@@ -48,7 +48,7 @@
             margin: 5px;
             cursor: move;
             user-select: none;
-            background-color: transparent; /* Sin borde visible */
+            background-color: transparent;
         }
         .point-red {
             width: 10px;
@@ -66,11 +66,11 @@
             display: inline-block;
             margin-right: 5px;
         }
-        .highlighted-red td {
-            background-color: rgba(255, 0, 0, 0.2);
+        td.red-text {
+            color: red;
         }
-        .highlighted-blue td {
-            background-color: rgba(0, 0, 255, 0.2);
+        td.blue-text {
+            color: blue;
         }
         #evaluation {
             margin-top: 20px;
@@ -82,41 +82,39 @@
             color: white;
             border: none;
             cursor: pointer;
+            display: none; /* No se muestra hasta que se cumplan las condiciones */
         }
         #check-button:hover {
             background-color: #45a049;
         }
-        /* Espacio para etiquetas */
         #label-x {
             position: absolute;
-            bottom: -60px; /* Más espacio en blanco */
+            bottom: -60px;
             left: 50%;
             transform: translateX(-50%);
         }
         #label-y {
             position: absolute;
             top: 50%;
-            left: -60px; /* Más espacio en blanco */
+            left: -100px;
             transform: translateY(-50%) rotate(-90deg);
         }
-        /* Rectángulos punteados para las etiquetas */
         .dashed-rectangle {
             border: 2px dashed grey;
             position: absolute;
         }
         #rect-x {
             bottom: -80px;
-            left: 40%;
+            left: 35%;
             width: 150px;
             height: 40px;
         }
         #rect-y {
             top: 20px;
-            left: -80px;
+            left: -100px;
             width: 40px;
             height: 150px;
         }
-        /* Mensaje parpadeante */
         @keyframes blink {
             0% { opacity: 1; }
             50% { opacity: 0; }
@@ -155,6 +153,7 @@
     <div id="evaluation">
         <p>Puntuación: <span id="score">0%</span></p>
     </div>
+    <button id="check-button">Comprobar</button>
 </div>
 
 <div id="data-table">
@@ -186,7 +185,6 @@
             </select>
         </p>
     </div>
-    <button id="check-button">Comprobar</button>
 </div>
 
 <script>
@@ -241,14 +239,14 @@
     }
 
     const tableBody = document.getElementById('table-body');
+    const randomIndexes = [0, 1, 2, 3, 4, 5].sort(() => 0.5 - Math.random()).slice(0, 2); // Seleccionar 2 puntos no consecutivos
     dataPoints.forEach((d, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `<td>${d.letter}</td><td>${d.x}</td><td>${d.y}</td>`;
-        // Colorea las filas según el punto (rojo para A, azul para B)
-        if (index === 0) {
-            row.classList.add('highlighted-red');
-        } else if (index === 1) {
-            row.classList.add('highlighted-blue');
+        if (index === randomIndexes[0]) {
+            row.querySelectorAll('td').forEach(td => td.classList.add('red-text'));
+        } else if (index === randomIndexes[1]) {
+            row.querySelectorAll('td').forEach(td => td.classList.add('blue-text'));
         }
         tableBody.appendChild(row);
     });
@@ -257,7 +255,7 @@
 
     const ctx = document.getElementById('myChart').getContext('2d');
     const myChart = new Chart(ctx, {
-        type: 'scatter',
+        type: 'line',
         data: {
             datasets: [{
                 label: '',
@@ -276,7 +274,7 @@
                     type: 'linear',
                     position: 'bottom',
                     title: { display: false },
-                    beginAtZero: true
+                    min: 0
                 },
                 y: {
                     title: { display: false },
@@ -317,27 +315,31 @@
         checkProgress();
     });
 
-    // Mensaje parpadeante con instrucciones
-    let instructionStep = 1;
-    const instructions = document.getElementById('instructions');
-
-    function updateInstructions() {
-        if (instructionStep === 1) {
-            instructions.textContent = 'Arrastra las etiquetas de los ejes a su lugar correcto.';
-        } else if (instructionStep === 2) {
-            instructions.textContent = 'Arrastra los puntos A y B hasta su lugar correcto en la gráfica.';
-        } else {
-            instructions.style.display = 'none';
-        }
-    }
-
+    let elementsDragged = 0;
+    let questionsAnswered = false;
     function checkProgress() {
-        if (instructionStep === 1 && document.getElementById('select1').value !== 'Sin responder' &&
-            document.getElementById('select2').value !== 'Sin responder') {
-            instructionStep = 2;
-            updateInstructions();
+        elementsDragged++;
+        if (elementsDragged === 4 && questionsAnswered) {
+            document.getElementById('check-button').style.display = 'block';
+            document.getElementById('instructions').textContent = "Pulsa el botón para comprobar tus respuestas.";
         }
     }
+
+    document.getElementById('select1').addEventListener('change', function() {
+        questionsAnswered = (this.value !== "Sin responder") && (document.getElementById('select2').value !== "Sin responder");
+        if (questionsAnswered && elementsDragged === 4) {
+            document.getElementById('check-button').style.display = 'block';
+            document.getElementById('instructions').textContent = "Pulsa el botón para comprobar tus respuestas.";
+        }
+    });
+
+    document.getElementById('select2').addEventListener('change', function() {
+        questionsAnswered = (this.value !== "Sin responder") && (document.getElementById('select1').value !== "Sin responder");
+        if (questionsAnswered && elementsDragged === 4) {
+            document.getElementById('check-button').style.display = 'block';
+            document.getElementById('instructions').textContent = "Pulsa el botón para comprobar tus respuestas.";
+        }
+    });
 
     const checkButton = document.getElementById('check-button');
     checkButton.addEventListener('click', function () {
@@ -365,7 +367,7 @@
         // Evaluar los puntos A y B
         const pointA = document.getElementById('point-A');
         const pointB = document.getElementById('point-B');
-        const pointsData = [dataPoints[0], dataPoints[1]]; // Datos de A y B
+        const pointsData = [dataPoints[randomIndexes[0]], dataPoints[randomIndexes[1]]];
 
         pointsData.forEach((point, index) => {
             const draggedPoint = index === 0 ? pointA : pointB;
@@ -382,7 +384,7 @@
         document.getElementById('score').textContent = score + '%';
 
         if (score === 100) {
-            instructions.textContent = "¡Has completado el ejercicio correctamente!";
+            document.getElementById('instructions').textContent = "¡Has completado el ejercicio correctamente!";
         }
     });
 </script>

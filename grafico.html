@@ -13,13 +13,13 @@
             padding: 0;
         }
         #chart-container {
-            width: 70%;
+            width: 65%; /* Más estrecha */
             padding: 20px;
             box-sizing: border-box;
             position: relative;
         }
         #data-table {
-            width: 30%;
+            width: 35%; /* Más ancho para dar más espacio a la tabla */
             padding: 20px;
             border-left: 2px solid #ccc;
             box-sizing: border-box;
@@ -37,7 +37,7 @@
             display: block;
             margin: auto;
             width: 100%;
-            height: 500px;
+            height: 400px; /* Menos alta */
         }
         #draggable-items {
             margin-top: 20px;
@@ -67,12 +67,41 @@
         .dragged-label {
             position: absolute;
         }
+        .cross {
+            width: 30px;
+            height: 30px;
+            display: inline-block;
+            position: relative;
+            transform: rotate(45deg); /* Giramos la cruz */
+            background-color: red;
+        }
+        .cross span {
+            position: absolute;
+            color: #fff;
+            font-weight: bold;
+            top: -25px;
+            left: 25px;
+        }
         #evaluation {
             margin-top: 20px;
         }
-        #label-x, #label-y {
-            left: 50%;
-            top: 10px;
+        /* Zona clicable más grande para los puntos */
+        .draggable-point {
+            padding: 10px;
+            cursor: move;
+            display: inline-flex;
+            align-items: center;
+        }
+        #check-button {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #check-button:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
@@ -87,9 +116,13 @@
         <!-- Etiquetas de las variables -->
         <div class="draggable" draggable="true" id="var1-label"></div>
         <div class="draggable" draggable="true" id="var2-label"></div>
-        <!-- Puntos arrastrables -->
-        <div class="draggable point" draggable="true" id="point-A">A</div>
-        <div class="draggable point" draggable="true" id="point-B">B</div>
+        <!-- Puntos arrastrables como cruces -->
+        <div class="draggable draggable-point" draggable="true" id="point-A">
+            <div class="cross"></div><span>A</span>
+        </div>
+        <div class="draggable draggable-point" draggable="true" id="point-B">
+            <div class="cross"></div><span>B</span>
+        </div>
     </div>
     <div id="evaluation">
         <p>Puntuación: <span id="score">0%</span></p>
@@ -100,7 +133,7 @@
     <table>
         <thead>
             <tr>
-                <th>Letra</th>
+                <th></th> <!-- Eliminado "Letra" -->
                 <th id="col1"></th>
                 <th id="col2"></th>
             </tr>
@@ -112,17 +145,20 @@
     <div>
         <p id="question1-text">La <span id="question1"></span> es la variable 
             <select id="select1">
+                <option value="Sin responder">Sin responder</option>
                 <option value="independiente">Independiente</option>
                 <option value="dependiente">Dependiente</option>
             </select>
         </p>
         <p id="question2-text">La <span id="question2"></span> es la variable 
             <select id="select2">
+                <option value="Sin responder">Sin responder</option>
                 <option value="independiente">Independiente</option>
                 <option value="dependiente">Dependiente</option>
             </select>
         </p>
     </div>
+    <button id="check-button">Comprobar</button>
 </div>
 
 <script>
@@ -200,6 +236,7 @@
 
     // Mostrar los datos en la tabla
     const tableBody = document.getElementById('table-body');
+    dataPoints.forEach(d =>
     dataPoints.forEach(d => {
         const row = document.createElement('tr');
         row.innerHTML = `<td>${d.letter}</td><td>${d.x}</td><td>${d.y}</td>`;
@@ -228,14 +265,12 @@
                     type: 'linear',
                     position: 'bottom',
                     title: {
-                        display: false,
-                        text: ''
+                        display: false
                     }
                 },
                 y: {
                     title: {
-                        display: false,
-                        text: ''
+                        display: false
                     }
                 }
             },
@@ -252,14 +287,12 @@
 
     // Funcionalidad de arrastrar y soltar
     let draggedItem = null;
-
     document.querySelectorAll('.draggable').forEach(item => {
         item.addEventListener('dragstart', function (e) {
             draggedItem = e.target;
         });
     });
 
-    // Etiquetas de los ejes
     const labelX = document.getElementById('label-x');
     const labelY = document.getElementById('label-y');
 
@@ -278,7 +311,6 @@
             draggedItem.style.top = `${e.clientY}px`;
             draggedItem.style.left = `${e.clientX}px`;
             document.getElementById('chart-container').appendChild(draggedItem);
-            updateScore(25);
         }
     });
 
@@ -290,63 +322,31 @@
             draggedItem.style.top = `${e.clientY}px`;
             draggedItem.style.left = `${e.clientX}px`;
             document.getElementById('chart-container').appendChild(draggedItem);
-            updateScore(25);
-        }
-    });
-
-    // Añadir puntos arrastrables a la gráfica
-    const chartArea = document.getElementById('chart-container');
-
-    chartArea.addEventListener('dragover', function (e) {
-        e.preventDefault();
-    });
-
-    chartArea.addEventListener('drop', function (e) {
-        e.preventDefault();
-        if (draggedItem && draggedItem.classList.contains('point')) {
-            const rect = ctx.canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            // Convertir coordenadas de pantalla a valores de datos
-            const xValue = myChart.scales.x.getValueForPixel(x);
-            const yValue = myChart.scales.y.getValueForPixel(y);
-
-            // Verificar si el punto está cerca de donde debería estar
-            const pointData = dataPoints.find(d => d.letter === draggedItem.textContent);
-            const tolerance = 0.5; // Tolerancia de 0.5 unidades
-
-            if (Math.abs(xValue - pointData.x) <= tolerance && Math.abs(yValue - pointData.y) <= tolerance) {
-                // Añadir el punto a la gráfica
-                myChart.data.datasets[0].data.push({ x: pointData.x, y: pointData.y });
-                myChart.update();
-                draggedItem.style.position = 'absolute';
-                draggedItem.style.top = `${e.clientY}px`;
-                draggedItem.style.left = `${e.clientX}px`;
-                document.getElementById('chart-container').appendChild(draggedItem);
-                updateScore(25);
-            }
         }
     });
 
     // Evaluación del estudiante
-    let score = 0;
-    function updateScore(points) {
-        score += points;
-        if (score > 100) score = 100;
-        document.getElementById('score').textContent = score + '%';
-    }
+    const checkButton = document.getElementById('check-button');
+    checkButton.addEventListener('click', function() {
+        let score = 0;
 
-    // Manejo de las preguntas de variable dependiente e independiente
-    const variables = [chosenPair[0], chosenPair[1]];
-    // Orden aleatorio de las preguntas
-    if (Math.random() > 0.5) {
-        document.getElementById('question1').textContent = variables[0];
-        document.getElementById('question2').textContent = variables[1];
-    } else {
-        document.getElementById('question1').textContent = variables[1];
-        document.getElementById('question2').textContent = variables[0];
-    }
+        // Evaluar si las etiquetas de los ejes están en los lugares correctos
+        if (labelX.textContent === chosenPair[0]) score += 25;
+        if (labelY.textContent === chosenPair[1]) score += 25;
+
+        // Evaluar las respuestas de los desplegables
+        const select1 = document.getElementById('select1').value;
+        const select2 = document.getElementById('select2').value;
+
+        if ((select1 === 'independiente' && select2 === 'dependiente') ||
+            (select1 === 'dependiente' && select2 === 'independiente')) {
+            score += 50;
+        }
+
+        // Mostrar la puntuación final
+        document.getElementById('score').textContent = score + '%';
+    });
 </script>
+
 </body>
 </html>

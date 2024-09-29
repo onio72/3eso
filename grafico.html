@@ -3,202 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Representación Gráfica</title>
+    <title>Simulación de Variables</title>
     <style>
         body {
             font-family: Arial, sans-serif;
         }
-        #container {
+        .container {
             display: flex;
-            justify-content: space-between;
         }
-        #table-container {
+        .table-container {
             width: 30%;
+            padding: 20px;
+        }
+        .graph-container {
+            width: 60%;
+            position: relative;
         }
         table {
             width: 100%;
             border-collapse: collapse;
         }
-        th, td {
+        table, th, td {
             border: 1px solid black;
-            padding: 8px;
+        }
+        th, td {
+            padding: 10px;
             text-align: center;
         }
-        #graph-container {
-            width: 60%;
-            position: relative;
+        .highlight-red {
+            background-color: red;
+            color: white;
         }
-        canvas {
+        .highlight-blue {
+            background-color: blue;
+            color: white;
+        }
+        #graph {
             border: 1px solid black;
-        }
-        #drag-zone {
+            position: relative;
+            width: 100%;
+            height: 300px;
             margin-top: 20px;
-            display: flex;
-            justify-content: space-between;
         }
         .draggable {
+            cursor: move;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            position: absolute;
+        }
+        #pointA {
+            background-color: red;
+        }
+        #pointB {
+            background-color: blue;
+        }
+        .y-axis-label, .x-axis-label {
             width: 100px;
             height: 30px;
             background-color: lightgray;
             text-align: center;
-            line-height: 30px;
-            cursor: pointer;
-            border: 1px solid black;
+            padding: 5px;
+            cursor: move;
         }
-        .draggable:hover {
-            background-color: gray;
+        #checkBtn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
         }
-        #instructions {
+        #message {
             font-weight: bold;
             color: red;
             animation: blink 1s step-start infinite;
         }
         @keyframes blink {
-            50% { opacity: 0; }
+            50% {
+                opacity: 0;
+            }
         }
     </style>
 </head>
 <body>
-
-<h2>Representación Gráfica de Datos</h2>
-
-<div id="container">
-    <div id="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Letra</th>
-                    <th id="independent-header">Variable X</th>
-                    <th id="dependent-header">Variable Y</th>
-                </tr>
-            </thead>
-            <tbody id="data-table">
-                <!-- Los datos se generan dinámicamente -->
-            </tbody>
-        </table>
-        <div id="instructions">Lee los datos de la tabla e indica qué tipo de variable es cada magnitud.</div>
-    </div>
-
-    <div id="graph-container">
-        <canvas id="graph" width="400" height="300"></canvas>
-        <div id="drag-zone">
-            <div id="drag-independent" class="draggable">Variable X</div>
-            <div id="drag-dependent" class="draggable">Variable Y</div>
+    <div id="message">Lee los datos de la tabla e indica qué tipo de variable es cada magnitud</div>
+    <div class="container">
+        <div class="table-container">
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Variable Independiente</th>
+                        <th>Variable Dependiente</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- La tabla se llenará con datos generados dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+        <div class="graph-container">
+            <div id="graph"></div>
+            <div id="pointA" class="draggable"></div>
+            <div id="pointB" class="draggable"></div>
+            <div id="x-label" class="x-axis-label draggable">Etiqueta X</div>
+            <div id="y-label" class="y-axis-label draggable">Etiqueta Y</div>
         </div>
     </div>
-</div>
+    <button id="checkBtn">Comprobar</button>
 
-<button id="check-button" style="display: none;">Comprobar</button>
+    <script>
+        // Variables y constantes aleatorias para las ecuaciones
+        const formulas = [
+            { name: 'posición-tiempo (lineal)', formula: (t, m, n) => m * t + n, indep: 'tiempo', dep: 'posición' },
+            { name: 'posición-tiempo (cuadrática)', formula: (t, m, n, o) => m * t * t + n * t + o, indep: 'tiempo', dep: 'posición' },
+            { name: 'masa-longitud (lineal)', formula: (m, k, k_prime) => k * m + k_prime, indep: 'masa', dep: 'longitud' },
+            { name: 'altura-tiempo (raíz cuadrada)', formula: (t, m) => Math.sqrt(m * t), indep: 'tiempo', dep: 'altura' }
+            // Puedes agregar más fórmulas aquí según las especificaciones
+        ];
 
-<script>
-    // Sorteo de magnitudes
-    const cases = [
-        {name: 'posición-tiempo (lineal)', independent: 'Tiempo', dependent: 'Posición', formula: (x, m = 2, n = 0) => m * x + n},
-        {name: 'posición-tiempo (cuadrática)', independent: 'Tiempo', dependent: 'Posición', formula: (x, m = 1, n = 0, o = 0) => m * x * x + n * x + o},
-        {name: 'masa-longitud', independent: 'Masa', dependent: 'Longitud', formula: (x, k = 1, c = 0) => k * x + c},
-        {name: 'altura-tiempo (raíz cuadrada)', independent: 'Tiempo', dependent: 'Altura', formula: (x, m = 3) => Math.sqrt(m * x)},
-        {name: 'aceleración-fuerza', independent: 'Fuerza', dependent: 'Aceleración', formula: (x, m = 2) => m * x},
-        {name: 'tiempo-velocidad (constante)', independent: 'Tiempo', dependent: 'Velocidad', formula: (x, k = 5) => k},
-        {name: 'tiempo-velocidad (lineal)', independent: 'Tiempo', dependent: 'Velocidad', formula: (x, m = 1, n = 0) => m * x + n},
-        {name: 'tiempo-aceleración (constante)', independent: 'Tiempo', dependent: 'Aceleración', formula: (x, k = 2) => k},
-        {name: 'tiempo-aceleración (lineal)', independent: 'Tiempo', dependent: 'Aceleración', formula: (x, m = 1, n = 0) => m * x + n},
-        {name: 'presión-volumen (inversa)', independent: 'Volumen', dependent: 'Presión', formula: (x, k = 100) => k / x}
-    ];
-
-    // Elegir un caso aleatorio
-    const randomCase = cases[Math.floor(Math.random() * cases.length)];
-
-    // Asignar los nombres de las magnitudes al encabezado
-    document.getElementById('independent-header').textContent = randomCase.independent;
-    document.getElementById('dependent-header').textContent = randomCase.dependent;
-
-    document.getElementById('drag-independent').textContent = randomCase.independent;
-    document.getElementById('drag-dependent').textContent = randomCase.dependent;
-
-    // Generar los valores de la tabla y la gráfica
-    const tableBody = document.getElementById('data-table');
-    const valuesX = [0, 1, 2, 3, 4, 5];  // Valores equiespaciados de la variable independiente
-    let dataY = [];
-
-    valuesX.forEach((x, index) => {
-        const y = randomCase.formula(x).toFixed(1);  // Calcular la variable dependiente truncada a una décima
-        dataY.push(y);
-
-        // Colorear puntos A y B en rojo y azul
-        const rowColor = index === 0 ? 'red' : index === 1 ? 'blue' : '';
-        tableBody.innerHTML += `<tr style="color: ${rowColor};"><td>${String.fromCharCode(65 + index)}</td><td>${x}</td><td>${y}</td></tr>`;
-    });
-
-    // Crear la gráfica
-    const canvas = document.getElementById('graph');
-    const ctx = canvas.getContext('2d');
-
-    function drawGraph() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.beginPath();
-        ctx.moveTo(50, 250);
-
-        valuesX.forEach((x, i) => {
-            const posX = 50 + i * 60;
-            const posY = 250 - dataY[i] * 10;
-            ctx.lineTo(posX, posY);
-        });
-        ctx.stroke();
-
-        // Dibujar los puntos huecos para A y B
-        ctx.beginPath();
-        ctx.arc(50, 250, 5, 0, 2 * Math.PI);  // Punto A
-        ctx.arc(110, 240, 5, 0, 2 * Math.PI);  // Punto B
-        ctx.stroke();
-    }
-
-    drawGraph();
-
-    // Funcionalidad de arrastrar y soltar etiquetas
-    let dragging = null;
-    let selectedIndependent = '';
-    let selectedDependent = '';
-
-    document.querySelectorAll('.draggable').forEach(el => {
-        el.addEventListener('dragstart', e => {
-            dragging = e.target;
+        const formula = formulas[Math.floor(Math.random() * formulas.length)];
+        const m = (Math.random() * 5).toFixed(1); // Constante aleatoria m
+        const n = (Math.random() * 5).toFixed(1); // Constante aleatoria n (si es necesario)
+        const o = (Math.random() * 5).toFixed(1); // Constante aleatoria o (si es necesario)
+        
+        // Generación de los datos
+        const indepValues = [0, 1, 2, 3, 4, 5]; // Valores de la variable independiente
+        const depValues = indepValues.map(x => {
+            if (formula.name.includes('cuadrática')) {
+                return formula.formula(x, parseFloat(m), parseFloat(n), parseFloat(o)).toFixed(1);
+            } else if (formula.name.includes('lineal') || formula.name.includes('proporcional')) {
+                return formula.formula(x, parseFloat(m), parseFloat(n)).toFixed(1);
+            } else {
+                return formula.formula(x, parseFloat(m)).toFixed(1);
+            }
         });
 
-        el.addEventListener('dragend', e => {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+        // Llenar la tabla con los valores generados
+        const tableBody = document.querySelector('#data-table tbody');
+        indepValues.forEach((val, index) => {
+            const row = document.createElement('tr');
+            const labelCell = document.createElement('td');
+            const indepCell = document.createElement('td');
+            const depCell = document.createElement('td');
+            
+            labelCell.textContent = String.fromCharCode(65 + index); // Letras A, B, C, etc.
+            indepCell.textContent = val;
+            depCell.textContent = depValues[index];
 
-            if (dragging.id === 'drag-independent' && x > 350 && y > 250) {
-                selectedIndependent = dragging.textContent;
-                dragging.style.position = 'absolute';
-                dragging.style.left = `${rect.right - 100}px`;
-                dragging.style.top = `${rect.bottom - 30}px`;
-            }
-            if (dragging.id === 'drag-dependent' && x < 50 && y < 50) {
-                selectedDependent = dragging.textContent;
-                dragging.style.position = 'absolute';
-                dragging.style.left = `${rect.left - 50}px`;
-                dragging.style.top = `${rect.top - 30}px`;
-            }
-
-            if (selectedIndependent && selectedDependent) {
-                document.getElementById('instructions').style.display = 'none';
-                document.getElementById('check-button').style.display = 'block';
+            if (index === 0) {
+                indepCell.classList.add('highlight-red');
+                depCell.classList.add('highlight-red');
+            } else if (index === 1) {
+                indepCell.classList.add('highlight-blue');
+                depCell.classList.add('highlight-blue');
             }
 
-            dragging = null;
+            row.appendChild(labelCell);
+            row.appendChild(indepCell);
+            row.appendChild(depCell);
+            tableBody.appendChild(row);
         });
-    });
 
-    // Botón de comprobación
-    document.getElementById('check-button').addEventListener('click', () => {
-        let score = 0;
-        if (selectedIndependent === randomCase.independent) score += 50;
-        if (selectedDependent === randomCase.dependent) score += 50;
-        alert(`Tu puntuación es: ${score}%`);
-    });
-</script>
+        // Función para arrastrar puntos y etiquetas
+        function makeDraggable(elem) {
+            let offsetX, offsetY;
+            elem.addEventListener('mousedown', function (e) {
+                offsetX = e.clientX - elem.offsetLeft;
+                offsetY = e.clientY - elem.offsetTop;
 
+                function onMouseMove(e) {
+                    elem.style.left = (e.clientX - offsetX) + 'px';
+                    elem.style.top = (e.clientY - offsetY) + 'px';
+                }
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', function () {
+                    document.removeEventListener('mousemove', onMouseMove);
+                }, { once: true });
+            });
+        }
+
+        // Aplicar la función draggable a puntos y etiquetas
+        makeDraggable(document.getElementById('pointA'));
+        makeDraggable(document.getElementById('pointB'));
+        makeDraggable(document.getElementById('x-label'));
+        makeDraggable(document.getElementById('y-label'));
+
+        // Botón de comprobación
+        document.getElementById('checkBtn').addEventListener('click', function () {
+            alert('¡Comprobación realizada! Aquí se debería evaluar la colocación de los puntos y etiquetas.');
+        });
+    </script>
 </body>
 </html>

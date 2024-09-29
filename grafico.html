@@ -12,17 +12,17 @@
             margin: 0;
             padding: 0;
         }
+        #data-table {
+            width: 30%; /* Tabla a la izquierda */
+            padding: 20px;
+            border-right: 2px solid #ccc;
+            box-sizing: border-box;
+        }
         #chart-container {
-            width: 65%;
+            width: 70%; /* Gráfica a la derecha */
             padding: 20px;
             box-sizing: border-box;
             position: relative;
-        }
-        #data-table {
-            width: 35%;
-            padding: 20px;
-            border-left: 2px solid #ccc;
-            box-sizing: border-box;
         }
         table {
             width: 100%;
@@ -41,6 +41,11 @@
         }
         #draggable-items {
             margin-top: 20px;
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            text-align: center;
         }
         .draggable {
             display: inline-block;
@@ -82,14 +87,14 @@
             color: white;
             border: none;
             cursor: pointer;
-            display: none; /* No se muestra hasta que se cumplan las condiciones */
+            display: none;
         }
         #check-button:hover {
             background-color: #45a049;
         }
         #label-x {
             position: absolute;
-            bottom: -60px;
+            bottom: -40px;
             left: 50%;
             transform: translateX(-50%);
         }
@@ -104,15 +109,14 @@
             position: absolute;
         }
         #rect-x {
-            bottom: 20px; /* Mover más cerca del eje x */
-            right: 30px; /* Ajustado para acercarlo más */
+            bottom: 0px;
+            left: 100px;
             width: 150px;
             height: 40px;
         }
         #rect-y {
-            top: 20px;
-            left: 10px; /* Trasladado para crear espacio */
-            transform: rotate(90deg); /* Rotar el rectángulo del eje y */
+            top: 0px;
+            left: -60px;
             width: 150px;
             height: 40px;
         }
@@ -130,32 +134,6 @@
     </style>
 </head>
 <body>
-
-<div id="chart-container">
-    <div id="instructions">Lee los datos de la tabla e indica qué tipo de variable es cada magnitud.</div>
-    <canvas id="myChart"></canvas>
-    <!-- Espacios para las etiquetas de los ejes -->
-    <div id="label-x" class="axis-label"></div>
-    <div id="label-y" class="axis-label"></div>
-    <div id="rect-x" class="dashed-rectangle"></div>
-    <div id="rect-y" class="dashed-rectangle"></div>
-    <div id="draggable-items">
-        <!-- Etiquetas de las variables -->
-        <div class="draggable" draggable="true" id="var1-label"></div>
-        <div class="draggable" draggable="true" id="var2-label"></div>
-        <!-- Puntos arrastrables -->
-        <div class="draggable point" draggable="true" id="point-A">
-            <div class="point-red"></div><span>A</span>
-        </div>
-        <div class="draggable point" draggable="true" id="point-B">
-            <div class="point-blue"></div><span>B</span>
-        </div>
-    </div>
-    <div id="evaluation">
-        <p>Puntuación: <span id="score">0%</span></p>
-    </div>
-    <button id="check-button">Comprobar</button>
-</div>
 
 <div id="data-table">
     <table>
@@ -188,228 +166,147 @@
     </div>
 </div>
 
+<div id="chart-container">
+    <div id="instructions">Lee los datos de la tabla e indica qué tipo de variable es cada magnitud.</div>
+    <canvas id="myChart"></canvas>
+    <!-- Espacios para las etiquetas de los ejes -->
+    <div id="label-x" class="axis-label"></div>
+    <div id="label-y" class="axis-label"></div>
+    <div id="rect-x" class="dashed-rectangle"></div>
+    <div id="rect-y" class="dashed-rectangle"></div>
+    <div id="draggable-items">
+        <!-- Etiquetas de las variables -->
+        <div class="draggable" draggable="true" id="var1-label"></div>
+        <div class="draggable" draggable="true" id="var2-label"></div>
+        <!-- Puntos arrastrables -->
+        <div class="draggable point" draggable="true" id="point-A">
+            <div class="point-red"></div><span>A</span>
+        </div>
+        <div class="draggable point" draggable="true" id="point-B">
+            <div class="point-blue"></div><span>B</span>
+        </div>
+    </div>
+    <div id="evaluation">
+        <p>Puntuación: <span id="score">0%</span></p>
+    </div>
+    <button id="check-button">Comprobar</button>
+</div>
+
 <script>
-    const variablePairs = [
-        { variables: ['tiempo (s)', 'posición (m)', 'f'], relation: 'direct' },
-        { variables: ['masa (g)', 'longitud (cm)', 'f'], relation: 'direct' },
-        { variables: ['altura (m)', 'tiempo (s)', 'f'], relation: 'sqrt' },
-        { variables: ['aceleración (m/s²)', 'fuerza (N)', 'f'], relation: 'direct' },
-        { variables: ['tiempo (s)', 'velocidad (m/s)', 'm'], relation: 'constant' },
-        { variables: ['tiempo (s)', 'aceleración (m/s²)', 'f'], relation: 'constant' },
-        { variables: ['presión (Pa)', 'volumen (m³)', 'm'], relation: 'inverse' }
+const variablePairs = [
+    { variables: ['posición (m)', 'tiempo (s)', 'lineal'], relation: 'lineal' },
+    { variables: ['posición (m)', 'tiempo (s)', 'cuadrática'], relation: 'cuadrática' },
+    { variables: ['masa (g)', 'longitud (cm)', 'lineal'], relation: 'lineal' },
+    { variables: ['altura (m)', 'tiempo (s)', 'raíz cuadrada'], relation: 'sqrt' },
+    { variables: ['aceleración (m/s²)', 'fuerza (N)', 'proporcional'], relation: 'proporcional' },
+    { variables: ['tiempo (s)', 'velocidad (m/s)', 'constante'], relation: 'constante' },
+    { variables: ['tiempo (s)', 'velocidad (m/s)', 'lineal'], relation: 'lineal' },
+    { variables: ['tiempo (s)', 'aceleración (m/s²)', 'constante'], relation: 'constante' },
+    { variables: ['tiempo (s)', 'aceleración (m/s²)', 'lineal'], relation: 'lineal' },
+    { variables: ['presión (Pa)', 'volumen (m³)', 'inversa'], relation: 'inversa' }
+];
+
+// Función para generar constantes aleatorias según el tipo de gráfico
+function generarConstantes(caso) {
+    if (caso.relation === 'lineal') {
+        return [Math.random() * 4 + 1, Math.random() * 10];
+    } else if (caso.relation === 'cuadrática') {
+        return [Math.random() * 2 + 1, Math.random() * 5, Math.random() * 5];
+    } else if (caso.relation === 'proporcional') {
+        return [Math.random() * 5 + 1];
+    } else if (caso.relation === 'inversa') {
+        return [Math.random() * 5 + 1];
+    } else if (caso.relation === 'constante') {
+        return [Math.random() * 5 + 1];
+    } else if (caso.relation === 'sqrt') {
+        return [Math.random() * 3 + 1];
+    }
+}
+
+// Generar los datos equiespaciados para la variable independiente
+function generarVariableIndependiente() {
+    const opciones = [
+        [0, 1, 2, 3, 4],
+        [0, 0.5, 1, 1.5, 2],
+        [0, 10, 20, 30, 40],
+        [0, 0.2, 0.4, 0.6, 0.8],
+        [0, 0.25, 0.5, 0.75, 1]
     ];
+    return opciones[Math.floor(Math.random() * opciones.length)];
+}
 
-    const chosenPairObj = variablePairs[Math.floor(Math.random() * variablePairs.length)];
-    const chosenPair = chosenPairObj.variables;
-    const relationType = chosenPairObj.relation;
-
-    const draggableItems = [chosenPair[0], chosenPair[1]].sort(() => 0.5 - Math.random());
-    document.getElementById('var1-label').textContent = draggableItems[0];
-    document.getElementById('var2-label').textContent = draggableItems[1];
-
-    document.getElementById('col1').textContent = chosenPair[0];
-    document.getElementById('col2').textContent = chosenPair[1];
-
-    document.getElementById('question1').textContent = chosenPair[0];
-    document.getElementById('question2').textContent = chosenPair[1];
-
-    const dataPoints = [];
-    for (let i = 0; i < 6; i++) {
-        let x, y;
-        switch(relationType) {
-            case 'direct':
-                x = (i + 1) * 10;
-                y = x * (Math.random() * 2 + 1);
-                break;
-            case 'sqrt':
-                x = (i + 1) * 10;
-                y = Math.sqrt(x);
-                break;
-            case 'constant':
-                x = (i + 1) * 10;
-                y = Math.random() * 10 + 5;
-                break;
-            case 'inverse':
-                x = (i + 1) * 10;
-                y = 100 / x;
-                break;
-        }
-        x = Math.round(x * 2) / 2;
-        y = Math.round(y * 2) / 2;
-        dataPoints.push({ letter: String.fromCharCode(65 + i), x: x, y: y });
+// Calcular los valores de la variable dependiente según el caso sorteado
+function calcularVariableDependiente(caso, x, constantes) {
+    if (caso.relation === 'lineal') {
+        return x.map(val => constantes[0] * val + constantes[1]);
+    } else if (caso.relation === 'cuadrática') {
+        return x.map(val => constantes[0] * val ** 2 + constantes[1] * val + constantes[2]);
+    } else if (caso.relation === 'proporcional') {
+        return x.map(val => constantes[0] * val);
+    } else if (caso.relation === 'inversa') {
+        return x.map(val => val === 0 ? 0 : constantes[0] / val); // Evitar el infinito en V = 0
+    } else if (caso.relation === 'constante') {
+        return x.map(() => constantes[0]);
+    } else if (caso.relation === 'sqrt') {
+        return x.map(val => Math.sqrt(constantes[0] * val));
     }
+}
 
-    const tableBody = document.getElementById('table-body');
-    const randomIndexes = [0, 1, 2, 3, 4, 5].sort(() => 0.5 - Math.random()).slice(0, 2); // Seleccionar 2 puntos no consecutivos
-    dataPoints.forEach((d, index) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td>${d.letter}</td><td>${d.x}</td><td>${d.y}</td>`;
-        if (index === randomIndexes[0]) {
-            row.querySelectorAll('td').forEach(td => td.classList.add('red-text'));
-        } else if (index === randomIndexes[1]) {
-            row.querySelectorAll('td').forEach(td => td.classList.add('blue-text'));
-        }
-        tableBody.appendChild(row);
-    });
+// Sorteo de magnitudes
+const caso = variablePairs[Math.floor(Math.random() * variablePairs.length)];
+const x = generarVariableIndependiente();
+const constantes = generarConstantes(caso);
+const y = calcularVariableDependiente(caso, x, constantes);
 
-    const chartDataPoints = dataPoints.filter((_, index) => !randomIndexes.includes(index)); // Filtrar los 4 puntos restantes
+// Datos de ejemplo para la tabla
+const dataPoints = [
+    { letter: 'A', x: x[0], y: y[0] },
+    { letter: 'B', x: x[1], y: y[1] },
+    { letter: 'C', x: x[2], y: y[2] },
+    { letter: 'D', x: x[3], y: y[3] },
+    { letter: 'E', x: x[4], y: y[4] },
+    { letter: 'F', x: x[5], y: y[5] }
+];
 
-    const ctx = document.getElementById('myChart').getContext('2d');
-    const myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            datasets: [{
-                label: '',
-                data: chartDataPoints.map(d => ({ x: d.x, y: d.y })),
-                backgroundColor: 'black',
-                borderColor: 'black',
-                borderWidth: 1,
-                pointRadius: 5,
-                showLine: true,
-                fill: false,
-            }]
-        },
-        options: {
-            scales: {
-                x: {
-                    type: 'linear',
-                    position: 'bottom',
-                    title: { display: false },
-                    min: 0
-                },
-                y: {
-                    title: { display: false },
-                    beginAtZero: true
-                }
-            },
-            plugins: { legend: { display: false } },
-            animation: { duration: 1000 }
-        }
-    });
+// Mostrar los datos en la tabla
+const tableBody = document.getElementById('table-body');
+dataPoints.forEach((d, index) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${d.letter}</td><td>${d.x}</td><td>${d.y}</td>`;
+    tableBody.appendChild(row);
+});
 
-    // Dibujar círculos sin relleno en los puntos sorteados
-    randomIndexes.forEach(index => {
-        const { x, y } = dataPoints[index];
-        myChart.data.datasets.push({
-            type: 'scatter',
-            data: [{ x, y }],
-            backgroundColor: 'transparent',
+// Gráfico
+const ctx = document.getElementById('myChart').getContext('2d');
+const myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        datasets: [{
+            label: '',
+            data: dataPoints.map(d => ({ x: d.x, y: d.y })),
+            backgroundColor: 'black',
             borderColor: 'black',
-            borderWidth: 2,
-            pointRadius: 6,
-            showLine: false,
+            borderWidth: 1,
+            showLine: true,
             fill: false,
-        });
-    });
-
-    myChart.update();
-
-    let draggedItem = null;
-    let offsetX = 0;
-    let offsetY = 0;
-
-    document.querySelectorAll('.draggable').forEach(item => {
-        item.addEventListener('dragstart', function (e) {
-            draggedItem = e.target;
-            offsetX = e.clientX - draggedItem.getBoundingClientRect().left;
-            offsetY = e.clientY - draggedItem.getBoundingClientRect().top;
-        });
-    });
-
-    const chartContainer = document.getElementById('chart-container');
-    chartContainer.addEventListener('dragover', function (e) {
-        e.preventDefault();
-    });
-
-    chartContainer.addEventListener('drop', function (e) {
-        e.preventDefault();
-        if (draggedItem) {
-            draggedItem.style.position = 'absolute';
-            draggedItem.style.top = `${e.clientY - offsetY}px`;
-            draggedItem.style.left = `${e.clientX - offsetX}px`;
-            draggedItem.style.zIndex = 1000;
-            chartContainer.appendChild(draggedItem);
-        }
-        checkProgress();
-    });
-
-    let elementsDragged = 0;
-    let questionsAnswered = false;
-    function checkProgress() {
-        elementsDragged++;
-        if (elementsDragged === 4 && questionsAnswered) {
-            document.getElementById('check-button').style.display = 'block';
-            document.getElementById('instructions').textContent = "Pulsa el botón para comprobar tus respuestas.";
+        }]
+    },
+    options: {
+        scales: {
+            x: {
+                type: 'linear',
+                position: 'bottom',
+                min: 0
+            },
+            y: {
+                beginAtZero: true
+            }
+        },
+        plugins: {
+            legend: { display: false }
         }
     }
-
-    document.getElementById('select1').addEventListener('change', function() {
-        questionsAnswered = (this.value !== "Sin responder") && (document.getElementById('select2').value !== "Sin responder");
-        if (questionsAnswered && elementsDragged === 4) {
-            document.getElementById('check-button').style.display = 'block';
-            document.getElementById('instructions').textContent = "Pulsa el botón para comprobar tus respuestas.";
-        }
-    });
-
-    document.getElementById('select2').addEventListener('change', function() {
-        questionsAnswered = (this.value !== "Sin responder") && (document.getElementById('select1').value !== "Sin responder");
-        if (questionsAnswered && elementsDragged === 4) {
-            document.getElementById('check-button').style.display = 'block';
-            document.getElementById('instructions').textContent = "Pulsa el botón para comprobar tus respuestas.";
-        }
-    });
-
-    const checkButton = document.getElementById('check-button');
-    checkButton.addEventListener('click', function () {
-        let score = 0;
-
-        const labelX = document.getElementById('label-x');
-        const labelY = document.getElementById('label-y');
-
-        // Verificar si las etiquetas están dentro de los rectángulos correctos
-        const rectX = document.getElementById('rect-x').getBoundingClientRect();
-        const rectY = document.getElementById('rect-y').getBoundingClientRect();
-        const labelXPos = labelX.getBoundingClientRect();
-        const labelYPos = labelY.getBoundingClientRect();
-
-        if (labelXPos.left >= rectX.left * 0.95 && labelXPos.right <= rectX.right * 1.05 &&
-            labelXPos.top >= rectX.top * 0.95 && labelXPos.bottom <= rectX.bottom * 1.05) {
-            score += 16.6;
-        }
-
-        if (labelYPos.left >= rectY.left * 0.95 && labelYPos.right <= rectY.right * 1.05 &&
-            labelYPos.top >= rectY.top * 0.95 && labelYPos.bottom <= rectY.bottom * 1.05) {
-            score += 16.6;
-        }
-
-        // Evaluar los puntos A y B
-        const pointA = document.getElementById('point-A');
-        const pointB = document.getElementById('point-B');
-        const pointsData = [dataPoints[randomIndexes[0]], dataPoints[randomIndexes[1]]];
-
-        pointsData.forEach((point, index) => {
-            const draggedPoint = index === 0 ? pointA : pointB;
-            const draggedPos = draggedPoint.getBoundingClientRect();
-            const xValue = myChart.scales.x.getValueForPixel(draggedPos.left);
-            const yValue = myChart.scales.y.getValueForPixel(draggedPos.top);
-
-            if (Math.abs(xValue - point.x) <= point.x * 0.05 && Math.abs(yValue - point.y) <= point.y * 0.05) {
-                score += 16.6;
-            }
-        });
-
-        // Verificar las respuestas de los desplegables
-        if (document.getElementById('select1').value !== "Sin responder" && document.getElementById('select2').value !== "Sin responder") {
-            score += 33.2; // 16.6% por cada respuesta correcta
-        }
-
-        // Mostrar la puntuación final
-        document.getElementById('score').textContent = score.toFixed(1) + '%';
-
-        if (score === 100) {
-            document.getElementById('instructions').textContent = "¡Has completado el ejercicio correctamente!";
-        }
-    });
+});
 </script>
 
 </body>

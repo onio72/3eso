@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Representación Gráfica de Datos</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+            align-items: center;
+        }
+
+        #header {
+            width: 100%;
+            text-align: center;
+            font-size: 24px;
+            margin: 20px 0;
+            border: 2px solid green;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        #content {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #data-table {
+            width: 30%;
+            padding: 20px;
+            border: 2px solid red;
+            box-sizing: border-box;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        canvas {
+            display: block;
+            margin: auto;
+            width: 100%;
+            height: 400px;
+        }
+
+        #chart-container {
+            width: 70%;
+            border: 2px solid blue;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        #draggable-items {
+            margin-top: 20px;
+        }
+
+        .draggable {
+            display: inline-block;
+            padding: 5px 10px;
+            margin: 5px;
+            cursor: move;
+            user-select: none;
+            background-color: transparent;
+        }
+
+        .point-red {
+            width: 10px;
+            height: 10px;
+            background-color: red;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .point-blue {
+            width: 10px;
+            height: 10px;
+            background-color: blue;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        td.red-text {
+            color: red;
+        }
+
+        td.blue-text {
+            color: blue;
+        }
+
+        #evaluation {
+            margin-top: 20px;
+        }
+
+        #check-button {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: none;
+        }
+
+        #check-button:hover {
+            background-color: #45a049;
+        }
+
+        #label-x {
+            position: absolute;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #label-y {
+            position: absolute;
+            top: 50%;
+            left: -100px;
+            transform: translateY(-50%) rotate(-90deg);
+        }
+
+        .dashed-rectangle {
+            border: 2px dashed grey;
+            position: absolute;
+        }
+
+        #rect-x {
+            bottom: 20px;
+            right: 30px;
+            width: 150px;
+            height: 40px;
+        }
+
+        #rect-y {
+            top: 20px;
+            left: 10px;
+            transform: rotate(90deg);
+            width: 150px;
+            height: 40px;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        #instructions {
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 20px;
+            animation: blink 1s infinite;
+        }
+    </style>
+</head>
+<body>
+
+<div id="header">
+    Representación gráfica de datos
+</div>
+
+<div id="content">
+    <!-- Tabla de datos -->
+    <div id="data-table">
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th id="col1"></th>
+                    <th id="col2"></th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <!-- Las filas de datos se insertarán dinámicamente -->
+            </tbody>
+        </table>
+        <div>
+            <p id="question1-text">La <span id="question1"></span> es la variable 
+                <select id="select1">
+                    <option value="Sin responder">Sin responder</option>
+                    <option value="independiente">Independiente</option>
+                    <option value="dependiente">Dependiente</option>
+                </select>
+            </p>
+            <p id="question2-text">La <span id="question2"></span> es la variable 
+                <select id="select2">
+                    <option value="Sin responder">Sin responder</option>
+                    <option value="independiente">Independiente</option>
+                    <option value="dependiente">Dependiente</option>
+                </select>
+            </p>
+        </div>
+    </div>
+
+    <!-- Gráfico y elementos interactivos -->
+    <div id="chart-container">
+        <div id="instructions">Lee los datos de la tabla e indica qué tipo de variable es cada magnitud.</div>
+        <canvas id="myChart"></canvas>
+        <!-- Espacios para las etiquetas de los ejes -->
+        <div id="label-x" class="axis-label"></div>
+        <div id="label-y" class="axis-label"></div>
+        <div id="rect-x" class="dashed-rectangle"></div>
+        <div id="rect-y" class="dashed-rectangle"></div>
+        <div id="draggable-items">
+            <!-- Etiquetas de las variables -->
+            <div class="draggable" draggable="true" id="var1-label"></div>
+            <div class="draggable" draggable="true" id="var2-label"></div>
+            <!-- Puntos arrastrables -->
+            <div class="draggable point" draggable="true" id="point-A">
+                <div class="point-red"></div><span>A</span>
+            </div>
+            <div class="draggable point" draggable="true" id="point-B">
+                <div class="point-blue"></div><span>B</span>
+            </div>
+        </div>
+        <div id="evaluation">
+            <p>Puntuación: <span id="score">0%</span></p>
+        </div>
+        <button id="check-button">Comprobar</button>
+    </div>
+</div>
+
+<script>
+    const variablePairs = [
+        { variables: ['tiempo (s)', 'posición (m)', 'direct'], relation: 'direct' },
+        { variables: ['masa (g)', 'longitud (cm)', 'direct'], relation: 'direct' },
+        { variables: ['altura (m)', 'tiempo (s)', 'sqrt'], relation: 'sqrt' },
+        { variables: ['aceleración (m/s²)', 'fuerza (N)', 'direct'], relation: 'direct' },
+        { variables: ['tiempo (s)', 'velocidad (m/s)', 'constant'], relation: 'constant' },
+        { variables: ['tiempo (s)', 'aceleración (m/s²)', 'constant'], relation: 'constant' },
+        { variables: ['presión (Pa)', 'volumen (m³)', 'inverse'], relation: 'inverse' }
+    ];
+
+    const chosenPairObj = variablePairs[Math.floor(Math.random() * variablePairs.length)];
+    const chosenPair = chosenPairObj.variables;
+    const relationType = chosenPairObj.relation;
+
+    const draggableItems = [chosenPair[0], chosenPair[1]].sort(() => 0.5 - Math.random());
+    document.getElementById('var1-label').textContent = draggableItems[0];
+    document.getElementById('var2-label').textContent = draggableItems[1];
+
+    document.getElementById('col1').textContent = chosenPair[0];
+    document.getElementById('col2').textContent = chosenPair[1];
+
+    document.getElementById('question1').textContent = chosenPair[0];
+    document.getElementById('question2').textContent = chosenPair[1];
+
+    const dataPoints = [];
+    for (let i = 0; i < 6; i++) {
+        let x, y;
+        switch(relationType) {
+            case 'direct':
+                x = (i + 1) * 10;
+                y = x * (Math.random() * 2 + 1);
+                break;
+            case 'sqrt':
+                x = (i + 1) * 10;
+                y = Math.sqrt(x);
+                break;
+            case 'constant':
+                x = (i + 1) * 10;
+                y = Math.random() * 10 + 5;
+                break;
+            case 'inverse':
+                x = (i + 1) * 10;
+                y = 100 / x;
+                break;
+        }
+        x = Math.round(x * 2) / 2;
+        y = Math.round(y * 2) / 2;
+        dataPoints.push({ letter: String.fromCharCode(65 + i), x: x, y: y });
+    }
+
+    const tableBody = document.getElementById('table-body');
+    const randomIndexes = [0, 1, 2, 3, 4, 5].sort(() => 0.5 - Math.random()).slice(0, 2); // Seleccionar 2 puntos no consecutivos
+    dataPoints.forEach((d, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${d.letter}</td><td>${d.x}</td><td>${d.y}</td>`;
+        if (index === randomIndexes[0]) {
+            row.querySelectorAll('td').forEach(td => td.classList.add('red-text'));
+        } else if (index === randomIndexes[1]) {
+            row.querySelectorAll('td').forEach(td => td.classList.add('blue-text'));
+        }
+        tableBody.appendChild(row);
+    });
+
+    const chartDataPoints = dataPoints.filter((_, index) => !randomIndexes.includes(index)); // Filtrar los 4 puntos restantes
+
+    const ctx = document.getElementById('myChart').getContext('2d');
+    const myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: [{
+                label: '',
+                data: chartDataPoints.map(d => ({ x: d.x, y: d.y })),
+                backgroundColor: 'black',
+                borderColor: 'black',
+                borderWidth: 1,
+                pointRadius: 5,
+                showLine: true,
+                fill: false,
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    title: { display: false },
+                    min: 0
+                },
+                y: {
+                    title: { display: false },
+                    beginAtZero: true
+                }
+            },
+            plugins: { legend: { display: false } },
+            animation: { duration: 1000 }
+        }
+    });
+
+    // Dibujar círculos sin relleno en los puntos sorteados
+    randomIndexes.forEach(index => {
+        const { x, y } = dataPoints[index];
+        myChart.data.datasets.push({
+            type: 'scatter',
+            data: [{ x, y }],
+            backgroundColor: 'transparent',
+            borderColor: 'black',
+            borderWidth: 2,
+            pointRadius: 6,
+            showLine: false,
+            fill: false,
+        });
+    });
+
+    myChart.update();
+
+    let draggedItem = null;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    document.querySelectorAll('.draggable').forEach(item => {
+        item.addEventListener('dragstart', function (e) {
+            draggedItem = e.target;
+            offsetX = e.clientX - draggedItem.getBoundingClientRect().left;
+            offsetY = e.clientY - draggedItem.getBoundingClientRect().top;
+        });
+    });
+
+    const chartContainer = document.getElementById('chart-container');
+    chartContainer.addEventListener('dragover', function (e) {
+        e.preventDefault();
+    });
+
+    chartContainer.addEventListener('drop', function (e) {
+        e.preventDefault();
+        if (draggedItem) {
+            draggedItem.style.position = 'absolute';
+            draggedItem.style.top = `${e.clientY - offsetY}px`;
+            draggedItem.style.left = `${e.clientX - offsetX}px`;
+            draggedItem.style.zIndex = 1000;
+            chartContainer.appendChild(draggedItem);
+        }
+        checkProgress();
+    });
+
+    let elementsDragged = 0;
+    let questionsAnswered = false;
+    function checkProgress() {
+        elementsDragged++;
+        if (elementsDragged === 4 && questionsAnswered) {
+            document.getElementById('check-button').style.display = 'block';
+            document.getElementById('instructions').textContent = "Pulsa el botón para comprobar tus respuestas.";
+        }
+    }
+
+    document.getElementById('select1').addEventListener('change', function() {
+        questionsAnswered = (this.value !== "Sin responder") && (document.getElementById('select2').value !== "Sin responder");
+        if (questionsAnswered && elementsDragged === 4) {
+            document.getElementById('check-button').style.display = 'block';
+            document.getElementById('instructions').textContent = "Pulsa el botón para comprobar tus respuestas.";
+        }
+    });
+
+    document.getElementById('select2').addEventListener('change', function() {
+        questionsAnswered = (this.value !== "Sin responder") && (document.getElementById('select1').value !== "Sin responder");
+        if (questionsAnswered && elementsDragged === 4) {
+            document.getElementById('check-button').style.display = 'block';
+            document.getElementById('instructions').textContent = "Pulsa el botón para comprobar tus respuestas.";
+        }
+    });
+
+    const checkButton = document.getElementById('check-button');
+    checkButton.addEventListener('click', function () {
+        let score = 0;
+
+        const labelX = document.getElementById('label-x');
+        const labelY = document.getElementById('label-y');
+
+        // Verificar si las etiquetas están dentro de los rectángulos correctos
+        const rectX = document.getElementById('rect-x').getBoundingClientRect();
+        const rectY = document.getElementById('rect-y').getBoundingClientRect();
+        const labelXPos = labelX.getBoundingClientRect();
+        const labelYPos = labelY.getBoundingClientRect();
+
+        if (labelXPos.left >= rectX.left * 0.95 && labelXPos.right <= rectX.right * 1.05 &&
+            labelXPos.top >= rectX.top * 0.95 && labelXPos.bottom <= rectX.bottom * 1.05) {
+            score += 16.6;
+        }
+
+        if (labelYPos.left >= rectY.left * 0.95 && labelYPos.right <= rectY.right * 1.05 &&
+            labelYPos.top >= rectY.top * 0.95 && labelYPos.bottom <= rectY.bottom * 1.05) {
+            score += 16.6;
+        }
+
+        // Evaluar los puntos A y B
+        const pointA = document.getElementById('point-A');
+        const pointB = document.getElementById('point-B');
+        const pointsData = [dataPoints[randomIndexes[0]], dataPoints[randomIndexes[1]]];
+
+        pointsData.forEach((point, index) => {
+            const draggedPoint = index === 0 ? pointA : pointB;
+            const draggedPos = draggedPoint.getBoundingClientRect();
+            const xValue = myChart.scales.x.getValueForPixel(draggedPos.left);
+            const yValue = myChart.scales.y.getValueForPixel(draggedPos.top);
+
+            if (Math.abs(xValue - point.x) <= point.x * 0.05 && Math.abs(yValue - point.y) <= point.y * 0.05) {
+                score += 16.6;
+            }
+        });
+
+        // Verificar las respuestas de los desplegables
+        if (document.getElementById('select1').value !== "Sin responder" && document.getElementById('select2').value !== "Sin responder") {
+            score += 33.2; // 16.6% por cada respuesta correcta
+        }
+
+        // Mostrar la puntuación final
+        document.getElementById('score').textContent = score.toFixed(1) + '%';
+
+        if (score === 100) {
+            document.getElementById('instructions').textContent = "¡Has completado el ejercicio correctamente!";
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -20,7 +20,7 @@
             margin-top: 50px; /* Mover tabla hacia abajo */
         }
         #chart-container {
-            width: 70%;
+            width: 60%; /* Reducir tamaño de la gráfica para espacio del eje y */
             padding: 20px;
             box-sizing: border-box;
             position: relative;
@@ -93,18 +93,6 @@
         #check-button:hover {
             background-color: #45a049;
         }
-        #label-x {
-            position: absolute;
-            bottom: -40px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        #label-y {
-            position: absolute;
-            top: 50%;
-            left: -120px;
-            transform: translateY(-50%) rotate(-90deg);
-        }
         .dashed-rectangle {
             border: 2px dashed grey;
             position: absolute;
@@ -116,10 +104,11 @@
             height: 40px;
         }
         #rect-y {
-            top: 0px;
-            left: 160px; /* Mover el rectángulo del eje y a la derecha, más espacio */
+            top: 50%;
+            left: 80%; /* Espacio reservado para el rectángulo del eje Y */
             width: 150px;
             height: 40px;
+            transform: translateY(-50%);
         }
         @keyframes blink {
             0% { opacity: 1; }
@@ -132,7 +121,7 @@
             margin-bottom: 20px;
             animation: blink 1s infinite;
             position: absolute;
-            top: 0px; /* Posicionar la instrucción parpadeante encima de la tabla */
+            top: -40px; /* Posicionar la instrucción parpadeante sobre la tabla */
             width: 100%;
         }
     </style>
@@ -145,8 +134,8 @@
         <thead>
             <tr>
                 <th>Letra</th>
-                <th id="col1">Variable X</th>
-                <th id="col2">Variable Y</th>
+                <th id="col1">Magnitud 1</th>
+                <th id="col2">Magnitud 2</th>
             </tr>
         </thead>
         <tbody id="table-body">
@@ -174,14 +163,12 @@
 <div id="chart-container">
     <canvas id="myChart"></canvas>
     <!-- Espacios para las etiquetas de los ejes -->
-    <div id="label-x" class="axis-label">Variable X (unidad)</div>
-    <div id="label-y" class="axis-label">Variable Y (unidad)</div>
     <div id="rect-x" class="dashed-rectangle"></div>
     <div id="rect-y" class="dashed-rectangle"></div>
     <div id="draggable-items">
         <!-- Etiquetas de las variables -->
-        <div class="draggable" draggable="true" id="var1-label">Variable X</div>
-        <div class="draggable" draggable="true" id="var2-label">Variable Y</div>
+        <div class="draggable" draggable="true" id="var1-label">Magnitud 1</div>
+        <div class="draggable" draggable="true" id="var2-label">Magnitud 2</div>
         <!-- Puntos arrastrables -->
         <div class="draggable point" draggable="true" id="point-A">
             <div class="point-red"></div><span>A</span>
@@ -277,7 +264,7 @@ const dataPoints = [
     { letter: 'F', x: x[5], y: y[5] }
 ];
 
-// Mostrar los datos en la tabla
+// Mostrar los datos en la tabla y colorear los puntos correspondientes
 const tableBody = document.getElementById('table-body');
 dataPoints.forEach((d, index) => {
     const row = document.createElement('tr');

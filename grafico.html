@@ -50,15 +50,13 @@
             text-align: center;
         }
 
-        /* Estilos para resaltar A y B en rojo y azul */
-        .row-A {
-            background-color: red;
-            color: white;
+        /* Estilos para el texto de A y B en azul y rojo */
+        .text-A {
+            color: red;
         }
 
-        .row-B {
-            background-color: blue;
-            color: white;
+        .text-B {
+            color: blue;
         }
 
         .questions, .labels-drag {
@@ -77,6 +75,20 @@
             padding: 5px;
             font-size: 14px;
         }
+
+        /* Estilos para las etiquetas arrastrables */
+        .draggable {
+            background-color: white;
+            padding: 10px;
+            display: inline-block;
+            border: 1px solid black;
+            cursor: grab;
+        }
+
+        canvas {
+            border: 1px solid black;
+            height: 500px;
+        }
     </style>
 </head>
 <body>
@@ -94,8 +106,8 @@
                 <thead>
                     <tr>
                         <th></th>
-                        <th id="independent-variable">Variable X</th>
-                        <th id="dependent-variable">Variable Y</th>
+                        <th id="independent-variable">Variable X (unidad)</th>
+                        <th id="dependent-variable">Variable Y (unidad)</th>
                     </tr>
                 </thead>
                 <tbody id="table-body">
@@ -105,21 +117,21 @@
 
             <!-- Preguntas -->
             <div class="question">
-                <label>Pregunta 1: 
+                <label>La <span id="magnitud1">magnitud1</span> es la: 
                     <select>
                         <option value="">Selecciona...</option>
-                        <option value="opcion1">Opción 1</option>
-                        <option value="opcion2">Opción 2</option>
+                        <option value="dependiente">Variable dependiente</option>
+                        <option value="independiente">Variable independiente</option>
                     </select>
                 </label>
             </div>
 
             <div class="question">
-                <label>Pregunta 2: 
+                <label>La <span id="magnitud2">magnitud2</span> es la: 
                     <select>
                         <option value="">Selecciona...</option>
-                        <option value="opcion1">Opción 1</option>
-                        <option value="opcion2">Opción 2</option>
+                        <option value="dependiente">Variable dependiente</option>
+                        <option value="independiente">Variable independiente</option>
                     </select>
                 </label>
             </div>
@@ -127,31 +139,31 @@
 
         <!-- Gráfica sin etiquetas ni título -->
         <div class="right-pane">
-            <canvas id="graphCanvas" width="600" height="400"></canvas>
+            <canvas id="graphCanvas"></canvas>
         </div>
     </div>
 
     <!-- Contenedor para etiquetas arrastrables -->
     <div class="labels-drag">
         <p>Arrastra las etiquetas para colocarlas en los ejes:</p>
-        <div draggable="true" style="background-color: lightblue; padding: 10px; display: inline-block;">Etiqueta 1</div>
-        <div draggable="true" style="background-color: lightgreen; padding: 10px; display: inline-block;">Etiqueta 2</div>
+        <div class="draggable" draggable="true" id="label-magnitud1">magnitud1 (unidad)</div>
+        <div class="draggable" draggable="true" id="label-magnitud2">magnitud2 (unidad)</div>
     </div>
 
     <!-- Script para generar datos y gestionar la lógica -->
     <script>
         // Fórmulas disponibles
         const formulas = [
-            { name: 'posición-tiempo: lineal', formula: (x, m, n) => m * x + n, xLabel: 'tiempo', yLabel: 'posición' },
-            { name: 'posición-tiempo: cuadrática', formula: (x, m, n, o) => m * Math.pow(x, 2) + n * x + o, xLabel: 'tiempo', yLabel: 'posición' },
-            { name: 'masa-longitud: lineal', formula: (x, m, k) => m * x + k, xLabel: 'masa', yLabel: 'longitud' },
-            { name: 'altura-tiempo: raíz cuadrada', formula: (x, m) => m * Math.sqrt(x), xLabel: 'tiempo', yLabel: 'altura' },
-            { name: 'aceleración-fuerza: proporcional', formula: (x, m) => m * x, xLabel: 'aceleración', yLabel: 'fuerza' },
-            { name: 'tiempo-velocidad: constante', formula: (x, k) => k, xLabel: 'tiempo', yLabel: 'velocidad' },
-            { name: 'tiempo-velocidad: lineal', formula: (x, m, n) => m * x + n, xLabel: 'tiempo', yLabel: 'velocidad' },
-            { name: 'tiempo-aceleración: constante', formula: (x, k) => k, xLabel: 'tiempo', yLabel: 'aceleración' },
-            { name: 'tiempo-aceleración: lineal', formula: (x, m, n) => m * x + n, xLabel: 'tiempo', yLabel: 'aceleración' },
-            { name: 'presión-volumen: inversa', formula: (x, k) => k / x, xLabel: 'volumen', yLabel: 'presión' }
+            { name: 'posición-tiempo: lineal', formula: (x, m, n) => m * x + n, xLabel: 'tiempo', xUnit: 's', yLabel: 'posición', yUnit: 'm' },
+            { name: 'posición-tiempo: cuadrática', formula: (x, m, n, o) => m * Math.pow(x, 2) + n * x + o, xLabel: 'tiempo', xUnit: 's', yLabel: 'posición', yUnit: 'm' },
+            { name: 'masa-longitud: lineal', formula: (x, m, k) => m * x + k, xLabel: 'masa', xUnit: 'kg', yLabel: 'longitud', yUnit: 'm' },
+            { name: 'altura-tiempo: raíz cuadrada', formula: (x, m) => m * Math.sqrt(x), xLabel: 'tiempo', xUnit: 's', yLabel: 'altura', yUnit: 'm' },
+            { name: 'aceleración-fuerza: proporcional', formula: (x, m) => m * x, xLabel: 'aceleración', xUnit: 'm/s²', yLabel: 'fuerza', yUnit: 'N' },
+            { name: 'tiempo-velocidad: constante', formula: (x, k) => k, xLabel: 'tiempo', xUnit: 's', yLabel: 'velocidad', yUnit: 'm/s' },
+            { name: 'tiempo-velocidad: lineal', formula: (x, m, n) => m * x + n, xLabel: 'tiempo', xUnit: 's', yLabel: 'velocidad', yUnit: 'm/s' },
+            { name: 'tiempo-aceleración: constante', formula: (x, k) => k, xLabel: 'tiempo', xUnit: 's', yLabel: 'aceleración', yUnit: 'm/s²' },
+            { name: 'tiempo-aceleración: lineal', formula: (x, m, n) => m * x + n, xLabel: 'tiempo', xUnit: 's', yLabel: 'aceleración', yUnit: 'm/s²' },
+            { name: 'presión-volumen: inversa', formula: (x, k) => k / (x || 1), xLabel: 'volumen', xUnit: 'm³', yLabel: 'presión', yUnit: 'Pa' }  // Evitar volumen 0
         ];
 
         // Sorteo de una fórmula
@@ -162,14 +174,24 @@
         // Generar datos aleatorios
         function generateData() {
             const formulaData = getRandomFormula();
-            const { formula, xLabel, yLabel } = formulaData;
+            const { formula, xLabel, xUnit, yLabel, yUnit } = formulaData;
             const tableBody = document.getElementById('table-body');
             const independentVar = document.getElementById('independent-variable');
             const dependentVar = document.getElementById('dependent-variable');
+            const labelMagnitud1 = document.getElementById('label-magnitud1');
+            const labelMagnitud2 = document.getElementById('label-magnitud2');
+            const questionMagnitud1 = document.getElementById('magnitud1');
+            const questionMagnitud2 = document.getElementById('magnitud2');
 
-            // Actualizar encabezados de la tabla
-            independentVar.textContent = xLabel;
-            dependentVar.textContent = yLabel;
+            // Actualizar encabezados de la tabla con unidades
+            independentVar.textContent = `${xLabel} (${xUnit})`;
+            dependentVar.textContent = `${yLabel} (${yUnit})`;
+
+            // Actualizar etiquetas y preguntas con magnitudes
+            labelMagnitud1.textContent = `${xLabel} (${xUnit})`;
+            labelMagnitud2.textContent = `${yLabel} (${yUnit})`;
+            questionMagnitud1.textContent = `${xLabel}`;
+            questionMagnitud2.textContent = `${yLabel}`;
 
             // Generar valores independientes
             const xValues = [0, 1, 2, 3, 4, 5]; // Valores equiespaciados
@@ -186,15 +208,43 @@
             // Generar valores dependientes
             xValues.forEach((x, i) => {
                 const y = formula(x, parseFloat(m), parseFloat(n), parseFloat(o), parseFloat(k)).toFixed(1);
-                const rowClass = i === 0 ? 'row-A' : i === 1 ? 'row-B' : '';
+                const textClass = i === 0 ? 'text-A' : i === 1 ? 'text-B' : '';
 
                 tableBody.innerHTML += `
-                    <tr class="${rowClass}">
+                    <tr>
                         <td>${rows[i]}</td>
-                        <td>${x}</td>
-                        <td>${y}</td>
+                        <td class="${textClass}">${x}</td>
+                        <td class="${textClass}">${y}</td>
                     </tr>
                 `;
+            });
+
+            drawGraph(xValues, xLabel, yLabel);
+        }
+
+        // Función para dibujar la gráfica
+        function drawGraph(xValues, xLabel, yLabel) {
+            const canvas = document.getElementById('graphCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);  // Limpiar canvas
+            ctx.beginPath();
+            ctx.moveTo(50, 450);
+            ctx.lineTo(550, 450);  // Eje X
+            ctx.lineTo(550, 50);   // Eje Y
+            ctx.stroke();
+
+            // Etiquetas de los ejes
+            ctx.font = "16px Arial";
+            ctx.fillText(xLabel, 500, 470);
+            ctx.fillText(yLabel, 30, 100);
+
+            // Dibujar puntos (ejemplo básico, puedes mejorarlo)
+            xValues.forEach((x, i) => {
+                const y = 450 - x * 70; // Ajuste básico
+                ctx.fillStyle = i === 0 ? "red" : i === 1 ? "blue" : "black";
+                ctx.beginPath();
+                ctx.arc(100 + x * 80, y, 5, 0, 2 * Math.PI);
+                ctx.fill();
             });
         }
 

@@ -3,21 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulación de Variables</title>
+    <title>Actividad Gráfica Interactiva</title>
     <style>
         body {
             font-family: Arial, sans-serif;
         }
         .container {
             display: flex;
-        }
-        .table-container {
-            width: 30%;
+            justify-content: space-between;
             padding: 20px;
         }
-        .graph-container {
-            width: 60%;
-            position: relative;
+        .table-container {
+            width: 40%;
         }
         table {
             width: 100%;
@@ -27,171 +24,156 @@
             border: 1px solid black;
         }
         th, td {
-            padding: 10px;
+            padding: 8px;
             text-align: center;
         }
-        .highlight-red {
-            background-color: red;
-            color: white;
-        }
-        .highlight-blue {
-            background-color: blue;
-            color: white;
-        }
-        #graph {
-            border: 1px solid black;
+        .graph-container {
             position: relative;
-            width: 100%;
-            height: 300px;
-            margin-top: 20px;
+            width: 50%;
+            height: 400px;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
         }
-        .draggable {
-            cursor: move;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
+        .axis-label {
+            width: 80px;
+            padding: 8px;
+            background-color: #ccc;
+            border: 1px solid #000;
+            cursor: grab;
+        }
+        .point {
             position: absolute;
-        }
-        #pointA {
+            width: 15px;
+            height: 15px;
             background-color: red;
+            border-radius: 50%;
+            cursor: grab;
         }
-        #pointB {
-            background-color: blue;
+        .dropzone {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: green;
+            border-radius: 50%;
         }
-        .y-axis-label, .x-axis-label {
-            width: 100px;
-            height: 30px;
-            background-color: lightgray;
-            text-align: center;
+        #x-axis-label, #y-axis-label {
+            position: absolute;
             padding: 5px;
-            cursor: move;
+            background-color: #ddd;
+            border: 1px solid #000;
+            cursor: grab;
         }
-        #checkBtn {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 16px;
+        #x-axis-label {
+            bottom: -50px;
+            left: 50%;
         }
-        #message {
-            font-weight: bold;
-            color: red;
-            animation: blink 1s step-start infinite;
-        }
-        @keyframes blink {
-            50% {
-                opacity: 0;
-            }
+        #y-axis-label {
+            top: 50%;
+            left: -60px;
         }
     </style>
 </head>
 <body>
-    <div id="message">Lee los datos de la tabla e indica qué tipo de variable es cada magnitud</div>
-    <div class="container">
-        <div class="table-container">
-            <table id="data-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Variable Independiente</th>
-                        <th>Variable Dependiente</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- La tabla se llenará con datos generados dinámicamente -->
-                </tbody>
-            </table>
-        </div>
-        <div class="graph-container">
-            <div id="graph"></div>
-            <div id="pointA" class="draggable"></div>
-            <div id="pointB" class="draggable"></div>
-            <div id="x-label" class="x-axis-label draggable">Etiqueta X</div>
-            <div id="y-label" class="y-axis-label draggable">Etiqueta Y</div>
-        </div>
+
+<div class="container">
+    <!-- Tabla de datos -->
+    <div class="table-container">
+        <h2>Datos de la Tabla</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Variable Independiente (X)</th>
+                    <th>Variable Dependiente (Y)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>2</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>4</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>6</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>8</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
-    <button id="checkBtn">Comprobar</button>
 
-    <script>
-        // Variables y constantes aleatorias para las ecuaciones
-        const formulas = [
-            { name: 'posición-tiempo (lineal)', formula: (t, m, n) => m * t + n, indep: 'tiempo', dep: 'posición' },
-            { name: 'posición-tiempo (cuadrática)', formula: (t, m, n, o) => m * t * t + n * t + o, indep: 'tiempo', dep: 'posición' },
-            { name: 'masa-longitud (lineal)', formula: (m, k, k_prime) => k * m + k_prime, indep: 'masa', dep: 'longitud' },
-            { name: 'altura-tiempo (raíz cuadrada)', formula: (t, m) => Math.sqrt(m * t), indep: 'tiempo', dep: 'altura' }
-            // Puedes agregar más fórmulas aquí según las especificaciones
-        ];
+    <!-- Gráfica interactiva -->
+    <div class="graph-container" id="graph-container">
+        <!-- Ejes -->
+        <div id="x-axis-label" class="axis-label">Eje X</div>
+        <div id="y-axis-label" class="axis-label">Eje Y</div>
 
-        const formula = formulas[Math.floor(Math.random() * formulas.length)];
-        const m = (Math.random() * 5).toFixed(1); // Constante aleatoria m
-        const n = (Math.random() * 5).toFixed(1); // Constante aleatoria n (si es necesario)
-        const o = (Math.random() * 5).toFixed(1); // Constante aleatoria o (si es necesario)
+        <!-- Puntos que los alumnos deben arrastrar -->
+        <div class="point" id="point1" draggable="true" style="top: 80%; left: 20%;"></div>
+        <div class="point" id="point2" draggable="true" style="top: 60%; left: 40%;"></div>
+        <div class="point" id="point3" draggable="true" style="top: 40%; left: 60%;"></div>
+        <div class="point" id="point4" draggable="true" style="top: 20%; left: 80%;"></div>
+    </div>
+</div>
+
+<script>
+    // Hacer las etiquetas de los ejes y los puntos arrastrables
+    const xAxisLabel = document.getElementById('x-axis-label');
+    const yAxisLabel = document.getElementById('y-axis-label');
+    const points = document.querySelectorAll('.point');
+    
+    let draggedElement = null;
+    
+    // Función general de "drag and drop"
+    function handleDragStart(event) {
+        draggedElement = event.target;
+        setTimeout(() => {
+            event.target.style.visibility = 'hidden';
+        }, 0);
+    }
+
+    function handleDragEnd(event) {
+        event.target.style.visibility = 'visible';
+        draggedElement = null;
+    }
+
+    function handleDrop(event) {
+        event.preventDefault();
+        const rect = event.target.getBoundingClientRect();
+        const offsetX = event.clientX - rect.left;
+        const offsetY = event.clientY - rect.top;
         
-        // Generación de los datos
-        const indepValues = [0, 1, 2, 3, 4, 5]; // Valores de la variable independiente
-        const depValues = indepValues.map(x => {
-            if (formula.name.includes('cuadrática')) {
-                return formula.formula(x, parseFloat(m), parseFloat(n), parseFloat(o)).toFixed(1);
-            } else if (formula.name.includes('lineal') || formula.name.includes('proporcional')) {
-                return formula.formula(x, parseFloat(m), parseFloat(n)).toFixed(1);
-            } else {
-                return formula.formula(x, parseFloat(m)).toFixed(1);
-            }
-        });
+        // Reposicionar el elemento arrastrado
+        draggedElement.style.left = `${offsetX}px`;
+        draggedElement.style.top = `${offsetY}px`;
+    }
 
-        // Llenar la tabla con los valores generados
-        const tableBody = document.querySelector('#data-table tbody');
-        indepValues.forEach((val, index) => {
-            const row = document.createElement('tr');
-            const labelCell = document.createElement('td');
-            const indepCell = document.createElement('td');
-            const depCell = document.createElement('td');
-            
-            labelCell.textContent = String.fromCharCode(65 + index); // Letras A, B, C, etc.
-            indepCell.textContent = val;
-            depCell.textContent = depValues[index];
+    function allowDrop(event) {
+        event.preventDefault();
+    }
 
-            if (index === 0) {
-                indepCell.classList.add('highlight-red');
-                depCell.classList.add('highlight-red');
-            } else if (index === 1) {
-                indepCell.classList.add('highlight-blue');
-                depCell.classList.add('highlight-blue');
-            }
+    // Añadir eventos a los puntos
+    points.forEach(point => {
+        point.addEventListener('dragstart', handleDragStart);
+        point.addEventListener('dragend', handleDragEnd);
+    });
 
-            row.appendChild(labelCell);
-            row.appendChild(indepCell);
-            row.appendChild(depCell);
-            tableBody.appendChild(row);
-        });
+    // Añadir eventos a la gráfica para soltar los puntos
+    const graphContainer = document.getElementById('graph-container');
+    graphContainer.addEventListener('dragover', allowDrop);
+    graphContainer.addEventListener('drop', handleDrop);
 
-        // Función para arrastrar puntos y etiquetas
-        function makeDraggable(elem) {
-            let offsetX, offsetY;
-            elem.addEventListener('mousedown', function (e) {
-                offsetX = e.clientX - elem.offsetLeft;
-                offsetY = e.clientY - elem.offsetTop;
+    // Añadir eventos para arrastrar y soltar las etiquetas de los ejes
+    xAxisLabel.addEventListener('dragstart', handleDragStart);
+    xAxisLabel.addEventListener('dragend', handleDragEnd);
+    yAxisLabel.addEventListener('dragstart', handleDragStart);
+    yAxisLabel.addEventListener('dragend', handleDragEnd);
+</script>
 
-                function onMouseMove(e) {
-                    elem.style.left = (e.clientX - offsetX) + 'px';
-                    elem.style.top = (e.clientY - offsetY) + 'px';
-                }
-
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', function () {
-                    document.removeEventListener('mousemove', onMouseMove);
-                }, { once: true });
-            });
-        }
-
-        // Aplicar la función draggable a puntos y etiquetas
-        makeDraggable(document.getElementById('pointA'));
-        makeDraggable(document.getElementById('pointB'));
-        makeDraggable(document.getElementById('x-label'));
-        makeDraggable(document.getElementById('y-label'));
-
-        // Botón de comprobación
-        document.getElementById('checkBtn').addEventListener('click', function () {
-            alert('¡Comprobación realizada! Aquí se debería evaluar la colocación de los puntos y etiquetas.');
-        });
-    </script>
 </body>
 </html>

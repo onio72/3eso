@@ -3,306 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Representación Gráfica de Datos</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Representación Gráfica</title>
     <style>
         body {
+            font-family: Arial, sans-serif;
+        }
+        #container {
             display: flex;
-            flex-direction: row;
-            margin: 0;
-            padding: 0;
+            justify-content: space-between;
         }
-        #data-table {
+        #table-container {
             width: 30%;
-            padding: 20px;
-            border-right: 2px solid #ccc;
-            box-sizing: border-box;
-            margin-top: 50px; /* Mover tabla hacia abajo */
-        }
-        #chart-container {
-            width: 60%; /* Reducir tamaño de la gráfica para espacio del eje y */
-            padding: 20px;
-            box-sizing: border-box;
-            position: relative;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            text-align: center;
         }
         th, td {
-            border: 1px solid #ddd;
+            border: 1px solid black;
             padding: 8px;
+            text-align: center;
+        }
+        #graph-container {
+            width: 60%;
+            position: relative;
         }
         canvas {
-            display: block;
-            margin: auto;
-            width: 100%;
-            height: 400px;
+            border: 1px solid black;
         }
-        #draggable-items {
+        #drag-zone {
             margin-top: 20px;
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            right: 10px;
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
         }
         .draggable {
-            display: inline-block;
-            padding: 5px 10px;
-            margin: 5px;
-            cursor: move;
-            user-select: none;
-            background-color: transparent;
-        }
-        .point-red {
-            width: 10px;
-            height: 10px;
-            background-color: red;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-        }
-        .point-blue {
-            width: 10px;
-            height: 10px;
-            background-color: blue;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-        }
-        td.red-text {
-            color: red;
-        }
-        td.blue-text {
-            color: blue;
-        }
-        #evaluation {
-            margin-top: 20px;
-        }
-        #check-button {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
+            width: 100px;
+            height: 30px;
+            background-color: lightgray;
+            text-align: center;
+            line-height: 30px;
             cursor: pointer;
-            display: none;
+            border: 1px solid black;
         }
-        #check-button:hover {
-            background-color: #45a049;
-        }
-        .dashed-rectangle {
-            border: 2px dashed grey;
-            position: absolute;
-        }
-        #rect-x {
-            bottom: 0px;
-            right: 10px; /* Mover el rectángulo del eje x a la derecha */
-            width: 150px;
-            height: 40px;
-        }
-        #rect-y {
-            top: 50%;
-            left: 80%; /* Espacio reservado para el rectángulo del eje Y */
-            width: 150px;
-            height: 40px;
-            transform: translateY(-50%);
-        }
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0; }
-            100% { opacity: 1; }
+        .draggable:hover {
+            background-color: gray;
         }
         #instructions {
-            text-align: center;
-            font-size: 16px;
-            margin-bottom: 20px;
-            animation: blink 1s infinite;
-            position: absolute;
-            top: -40px; /* Posicionar la instrucción parpadeante sobre la tabla */
-            width: 100%;
+            font-weight: bold;
+            color: red;
+            animation: blink 1s step-start infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
         }
     </style>
 </head>
 <body>
 
-<div id="data-table">
-    <div id="instructions">Lee los datos de la tabla e indica qué tipo de variable es cada magnitud.</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Letra</th>
-                <th id="col1">Magnitud 1</th>
-                <th id="col2">Magnitud 2</th>
-            </tr>
-        </thead>
-        <tbody id="table-body">
-            <!-- Las filas de datos se insertarán dinámicamente -->
-        </tbody>
-    </table>
-    <div>
-        <p id="question1-text">La <span id="question1"></span> es la variable 
-            <select id="select1">
-                <option value="Sin responder">Sin responder</option>
-                <option value="independiente">Independiente</option>
-                <option value="dependiente">Dependiente</option>
-            </select>
-        </p>
-        <p id="question2-text">La <span id="question2"></span> es la variable 
-            <select id="select2">
-                <option value="Sin responder">Sin responder</option>
-                <option value="independiente">Independiente</option>
-                <option value="dependiente">Dependiente</option>
-            </select>
-        </p>
+<h2>Representación Gráfica de Datos</h2>
+
+<div id="container">
+    <div id="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Letra</th>
+                    <th id="independent-header">Variable X</th>
+                    <th id="dependent-header">Variable Y</th>
+                </tr>
+            </thead>
+            <tbody id="data-table">
+                <!-- Los datos se generan dinámicamente -->
+            </tbody>
+        </table>
+        <div id="instructions">Lee los datos de la tabla e indica qué tipo de variable es cada magnitud.</div>
+    </div>
+
+    <div id="graph-container">
+        <canvas id="graph" width="400" height="300"></canvas>
+        <div id="drag-zone">
+            <div id="drag-independent" class="draggable">Variable X</div>
+            <div id="drag-dependent" class="draggable">Variable Y</div>
+        </div>
     </div>
 </div>
 
-<div id="chart-container">
-    <canvas id="myChart"></canvas>
-    <!-- Espacios para las etiquetas de los ejes -->
-    <div id="rect-x" class="dashed-rectangle"></div>
-    <div id="rect-y" class="dashed-rectangle"></div>
-    <div id="draggable-items">
-        <!-- Etiquetas de las variables -->
-        <div class="draggable" draggable="true" id="var1-label">Magnitud 1</div>
-        <div class="draggable" draggable="true" id="var2-label">Magnitud 2</div>
-        <!-- Puntos arrastrables -->
-        <div class="draggable point" draggable="true" id="point-A">
-            <div class="point-red"></div><span>A</span>
-        </div>
-        <div class="draggable point" draggable="true" id="point-B">
-            <div class="point-blue"></div><span>B</span>
-        </div>
-    </div>
-    <div id="evaluation">
-        <p>Puntuación: <span id="score">0%</span></p>
-    </div>
-    <button id="check-button">Comprobar</button>
-</div>
+<button id="check-button" style="display: none;">Comprobar</button>
 
 <script>
-// Función para truncar a una décima
-function truncar(num) {
-    return Math.trunc(num * 10) / 10;
-}
-
-const variablePairs = [
-    { variables: ['posición (m)', 'tiempo (s)', 'lineal'], relation: 'lineal' },
-    { variables: ['posición (m)', 'tiempo (s)', 'cuadrática'], relation: 'cuadrática' },
-    { variables: ['masa (g)', 'longitud (cm)', 'lineal'], relation: 'lineal' },
-    { variables: ['altura (m)', 'tiempo (s)', 'raíz cuadrada'], relation: 'sqrt' },
-    { variables: ['aceleración (m/s²)', 'fuerza (N)', 'proporcional'], relation: 'proporcional' },
-    { variables: ['tiempo (s)', 'velocidad (m/s)', 'constante'], relation: 'constante' },
-    { variables: ['tiempo (s)', 'velocidad (m/s)', 'lineal'], relation: 'lineal' },
-    { variables: ['tiempo (s)', 'aceleración (m/s²)', 'constante'], relation: 'constante' },
-    { variables: ['tiempo (s)', 'aceleración (m/s²)', 'lineal'], relation: 'lineal' },
-    { variables: ['presión (Pa)', 'volumen (m³)', 'inversa'], relation: 'inversa' }
-];
-
-// Función para generar constantes aleatorias según el tipo de gráfico
-function generarConstantes(caso) {
-    if (caso.relation === 'lineal') {
-        return [Math.random() * 4 + 1, Math.random() * 10];
-    } else if (caso.relation === 'cuadrática') {
-        return [Math.random() * 2 + 1, Math.random() * 5, Math.random() * 5];
-    } else if (caso.relation === 'proporcional') {
-        return [Math.random() * 5 + 1];
-    } else if (caso.relation === 'inversa') {
-        return [Math.random() * 5 + 1];
-    } else if (caso.relation === 'constante') {
-        return [Math.random() * 5 + 1];
-    } else if (caso.relation === 'sqrt') {
-        return [Math.random() * 3 + 1];
-    }
-}
-
-// Generar los datos equiespaciados para la variable independiente
-function generarVariableIndependiente() {
-    const opciones = [
-        [0, 1, 2, 3, 4],
-        [0, 0.5, 1, 1.5, 2],
-        [0, 10, 20, 30, 40],
-        [0, 0.2, 0.4, 0.6, 0.8],
-        [0, 0.25, 0.5, 0.75, 1]
+    // Sorteo de magnitudes
+    const cases = [
+        {name: 'posición-tiempo (lineal)', independent: 'Tiempo', dependent: 'Posición', formula: (x, m = 2, n = 0) => m * x + n},
+        {name: 'posición-tiempo (cuadrática)', independent: 'Tiempo', dependent: 'Posición', formula: (x, m = 1, n = 0, o = 0) => m * x * x + n * x + o},
+        {name: 'masa-longitud', independent: 'Masa', dependent: 'Longitud', formula: (x, k = 1, c = 0) => k * x + c},
+        {name: 'altura-tiempo (raíz cuadrada)', independent: 'Tiempo', dependent: 'Altura', formula: (x, m = 3) => Math.sqrt(m * x)},
+        {name: 'aceleración-fuerza', independent: 'Fuerza', dependent: 'Aceleración', formula: (x, m = 2) => m * x},
+        {name: 'tiempo-velocidad (constante)', independent: 'Tiempo', dependent: 'Velocidad', formula: (x, k = 5) => k},
+        {name: 'tiempo-velocidad (lineal)', independent: 'Tiempo', dependent: 'Velocidad', formula: (x, m = 1, n = 0) => m * x + n},
+        {name: 'tiempo-aceleración (constante)', independent: 'Tiempo', dependent: 'Aceleración', formula: (x, k = 2) => k},
+        {name: 'tiempo-aceleración (lineal)', independent: 'Tiempo', dependent: 'Aceleración', formula: (x, m = 1, n = 0) => m * x + n},
+        {name: 'presión-volumen (inversa)', independent: 'Volumen', dependent: 'Presión', formula: (x, k = 100) => k / x}
     ];
-    return opciones[Math.floor(Math.random() * opciones.length)];
-}
 
-// Calcular los valores de la variable dependiente según el caso sorteado
-function calcularVariableDependiente(caso, x, constantes) {
-    if (caso.relation === 'lineal') {
-        return x.map(val => truncar(constantes[0] * val + constantes[1]));
-    } else if (caso.relation === 'cuadrática') {
-        return x.map(val => truncar(constantes[0] * val ** 2 + constantes[1] * val + constantes[2]));
-    } else if (caso.relation === 'proporcional') {
-        return x.map(val => truncar(constantes[0] * val));
-    } else if (caso.relation === 'inversa') {
-        return x.map(val => truncar(val === 0 ? 0 : constantes[0] / val));
-    } else if (caso.relation === 'constante') {
-        return x.map(() => truncar(constantes[0]));
-    } else if (caso.relation === 'sqrt') {
-        return x.map(val => truncar(Math.sqrt(constantes[0] * val)));
+    // Elegir un caso aleatorio
+    const randomCase = cases[Math.floor(Math.random() * cases.length)];
+
+    // Asignar los nombres de las magnitudes al encabezado
+    document.getElementById('independent-header').textContent = randomCase.independent;
+    document.getElementById('dependent-header').textContent = randomCase.dependent;
+
+    document.getElementById('drag-independent').textContent = randomCase.independent;
+    document.getElementById('drag-dependent').textContent = randomCase.dependent;
+
+    // Generar los valores de la tabla y la gráfica
+    const tableBody = document.getElementById('data-table');
+    const valuesX = [0, 1, 2, 3, 4, 5];  // Valores equiespaciados de la variable independiente
+    let dataY = [];
+
+    valuesX.forEach((x, index) => {
+        const y = randomCase.formula(x).toFixed(1);  // Calcular la variable dependiente truncada a una décima
+        dataY.push(y);
+
+        // Colorear puntos A y B en rojo y azul
+        const rowColor = index === 0 ? 'red' : index === 1 ? 'blue' : '';
+        tableBody.innerHTML += `<tr style="color: ${rowColor};"><td>${String.fromCharCode(65 + index)}</td><td>${x}</td><td>${y}</td></tr>`;
+    });
+
+    // Crear la gráfica
+    const canvas = document.getElementById('graph');
+    const ctx = canvas.getContext('2d');
+
+    function drawGraph() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        ctx.moveTo(50, 250);
+
+        valuesX.forEach((x, i) => {
+            const posX = 50 + i * 60;
+            const posY = 250 - dataY[i] * 10;
+            ctx.lineTo(posX, posY);
+        });
+        ctx.stroke();
+
+        // Dibujar los puntos huecos para A y B
+        ctx.beginPath();
+        ctx.arc(50, 250, 5, 0, 2 * Math.PI);  // Punto A
+        ctx.arc(110, 240, 5, 0, 2 * Math.PI);  // Punto B
+        ctx.stroke();
     }
-}
 
-// Sorteo de magnitudes
-const caso = variablePairs[Math.floor(Math.random() * variablePairs.length)];
-const x = generarVariableIndependiente();
-const constantes = generarConstantes(caso);
-const y = calcularVariableDependiente(caso, x, constantes);
+    drawGraph();
 
-// Datos de ejemplo para la tabla
-const dataPoints = [
-    { letter: 'A', x: x[0], y: y[0] },
-    { letter: 'B', x: x[1], y: y[1] },
-    { letter: 'C', x: x[2], y: y[2] },
-    { letter: 'D', x: x[3], y: y[3] },
-    { letter: 'E', x: x[4], y: y[4] },
-    { letter: 'F', x: x[5], y: y[5] }
-];
+    // Funcionalidad de arrastrar y soltar etiquetas
+    let dragging = null;
+    let selectedIndependent = '';
+    let selectedDependent = '';
 
-// Mostrar los datos en la tabla y colorear los puntos correspondientes
-const tableBody = document.getElementById('table-body');
-dataPoints.forEach((d, index) => {
-    const row = document.createElement('tr');
-    row.innerHTML = `<td>${d.letter}</td><td>${d.x}</td><td>${d.y}</td>`;
-    tableBody.appendChild(row);
-});
+    document.querySelectorAll('.draggable').forEach(el => {
+        el.addEventListener('dragstart', e => {
+            dragging = e.target;
+        });
 
-// Gráfico
-const ctx = document.getElementById('myChart').getContext('2d');
-const myChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        datasets: [{
-            label: '',
-            data: dataPoints.map(d => ({ x: d.x, y: d.y })),
-            backgroundColor: 'black',
-            borderColor: 'black',
-            borderWidth: 1,
-            showLine: true,
-            fill: false,
-        }]
-    },
-    options: {
-        scales: {
-            x: {
-                type: 'linear',
-                position: 'bottom',
-                min: 0
-            },
-            y: {
-                beginAtZero: true
+        el.addEventListener('dragend', e => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (dragging.id === 'drag-independent' && x > 350 && y > 250) {
+                selectedIndependent = dragging.textContent;
+                dragging.style.position = 'absolute';
+                dragging.style.left = `${rect.right - 100}px`;
+                dragging.style.top = `${rect.bottom - 30}px`;
             }
-        },
-        plugins: {
-            legend: { display: false }
-        }
-    }
-});
+            if (dragging.id === 'drag-dependent' && x < 50 && y < 50) {
+                selectedDependent = dragging.textContent;
+                dragging.style.position = 'absolute';
+                dragging.style.left = `${rect.left - 50}px`;
+                dragging.style.top = `${rect.top - 30}px`;
+            }
+
+            if (selectedIndependent && selectedDependent) {
+                document.getElementById('instructions').style.display = 'none';
+                document.getElementById('check-button').style.display = 'block';
+            }
+
+            dragging = null;
+        });
+    });
+
+    // Botón de comprobación
+    document.getElementById('check-button').addEventListener('click', () => {
+        let score = 0;
+        if (selectedIndependent === randomCase.independent) score += 50;
+        if (selectedDependent === randomCase.dependent) score += 50;
+        alert(`Tu puntuación es: ${score}%`);
+    });
 </script>
 
 </body>

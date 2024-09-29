@@ -21,7 +21,7 @@
         .row {
             display: flex;
             width: 100%;
-            height: 400px;
+            height: 600px; /* Ajustamos el tamaño del contenedor */
         }
 
         .left-pane {
@@ -83,11 +83,14 @@
             display: inline-block;
             border: 1px solid black;
             cursor: grab;
+            position: absolute;
         }
 
+        /* Aseguramos que el canvas sea mayor */
         canvas {
             border: 1px solid black;
-            height: 500px;
+            width: 700px;
+            height: 600px;
         }
     </style>
 </head>
@@ -139,19 +142,46 @@
 
         <!-- Gráfica sin etiquetas ni título -->
         <div class="right-pane">
-            <canvas id="graphCanvas" width="600" height="500"></canvas>
+            <canvas id="graphCanvas" width="700" height="600"></canvas>
         </div>
     </div>
 
     <!-- Contenedor para etiquetas arrastrables -->
-    <div class="labels-drag">
+    <div class="labels-drag" style="position: relative;">
         <p>Arrastra las etiquetas para colocarlas en los ejes:</p>
-        <div class="draggable" draggable="true" id="label-magnitud1">magnitud1 (unidad)</div>
-        <div class="draggable" draggable="true" id="label-magnitud2">magnitud2 (unidad)</div>
+        <div class="draggable" id="label-magnitud1" draggable="true" style="top: 10px; left: 50px;">A</div>
+        <div class="draggable" id="label-magnitud2" draggable="true" style="top: 10px; left: 150px;">B</div>
+        <div class="draggable" id="label-A" draggable="true" style="top: 10px; left: 250px;">magnitud1 (unidad)</div>
+        <div class="draggable" id="label-B" draggable="true" style="top: 10px; left: 350px;">magnitud2 (unidad)</div>
     </div>
 
     <!-- Script para generar datos y gestionar la lógica -->
     <script>
+        // Variables globales para el arrastre
+        let draggedElement = null;
+
+        // Función para permitir el arrastre
+        document.querySelectorAll('.draggable').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                draggedElement = e.target;
+            });
+        });
+
+        // Función para manejar la posición final del arrastre
+        document.querySelectorAll('.labels-drag').forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const rect = zone.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                draggedElement.style.left = x + 'px';
+                draggedElement.style.top = y + 'px';
+            });
+        });
+
         // Fórmulas disponibles
         const formulas = [
             { name: 'posición-tiempo: lineal', formula: (x, m, n) => m * x + n, xLabel: 'tiempo', xUnit: 's', yLabel: 'posición', yUnit: 'm' },
@@ -222,43 +252,31 @@
                 `;
             });
 
-            drawGraph(xValues, yValues, xLabel, yLabel);
+            drawGraph(xValues, yValues);
         }
 
         // Función para dibujar la gráfica
-        function drawGraph(xValues, yValues, xLabel, yLabel) {
+        function drawGraph(xValues, yValues) {
             const canvas = document.getElementById('graphCanvas');
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);  // Limpiar canvas
 
             // Dibujar ejes
             ctx.beginPath();
-            ctx.moveTo(50, 450);
-            ctx.lineTo(550, 450);  // Eje X
-            ctx.lineTo(550, 50);   // Eje Y
+            ctx.moveTo(50, 550); // Eje X (abajo)
+            ctx.lineTo(50, 50);  // Eje Y (izquierda)
+            ctx.lineTo(650, 550);  // Extensión eje X
             ctx.stroke();
 
-            // Etiquetas de los ejes
-            ctx.font = "16px Arial";
-            ctx.fillText(xLabel, 500, 470);
-            ctx.fillText(yLabel, 30, 100);
-
-            // Dibujar puntos y líneas
+            // Dibujar curva
             ctx.beginPath();
+            ctx.moveTo(50 + xValues[0] * 100, 550 - yValues[0] * 50);  // Escalar los valores
             xValues.forEach((x, i) => {
-                const scaledX = 100 + x * 80;
-                const scaledY = 450 - yValues[i] * 50;  // Escalar valores de Y
-                if (i === 0) {
-                    ctx.moveTo(scaledX, scaledY);  // Moverse al primer punto
-                } else {
-                    ctx.lineTo(scaledX, scaledY);  // Dibujar línea al siguiente punto
-                }
-                // Dibujar puntos
-                ctx.fillStyle = i === 0 ? "red" : i === 1 ? "blue" : "black";
-                ctx.beginPath();
-                ctx.arc(scaledX, scaledY, 5, 0, 2 * Math.PI);
-                ctx.fill();
+                const scaledX = 50 + x * 100;
+                const scaledY = 550 - yValues[i] * 50;  // Escalar valores de Y
+                ctx.lineTo(scaledX, scaledY);  // Dibujar línea para la curva
             });
+            ctx.strokeStyle = 'black';
             ctx.stroke();
         }
 

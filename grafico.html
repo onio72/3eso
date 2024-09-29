@@ -104,16 +104,17 @@
             position: absolute;
         }
         #rect-x {
-            bottom: -80px;
-            right: 0;
+            bottom: 20px; /* Mover más cerca del eje x */
+            right: 30px; /* Ajustado para acercarlo más */
             width: 150px;
             height: 40px;
         }
         #rect-y {
-            top: 0;
-            left: 0;
-            width: 40px;
-            height: 150px;
+            top: 20px;
+            left: 10px; /* Trasladado para crear espacio */
+            transform: rotate(90deg); /* Rotar el rectángulo del eje y */
+            width: 150px;
+            height: 40px;
         }
         @keyframes blink {
             0% { opacity: 1; }

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animación de Gráficas</title>
+    <style>
+        .graph-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        .graph {
+            width: 30%;
+            height: 300px;
+        }
+        .dropdown-container {
+            text-align: center;
+        }
+        .dropdown {
+            margin-top: 10px;
+        }
+        .result {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .check-icon {
+            font-size: 20px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="graph-container">
+        <div class="graph-block">
+            <canvas id="graph1" class="graph"></canvas>
+            <div class="dropdown-container">
+                <select id="dropdown1" class="dropdown">
+                    <option value="">Seleccione</option>
+                    <option value="constante">Constante</option>
+                    <option value="lineal">Lineal</option>
+                    <option value="proporcional">Proporcional</option>
+                    <option value="cuadratica">Cuadrática</option>
+                    <option value="inversa">Inversa</option>
+                </select>
+                <span id="check1" class="check-icon"></span>
+            </div>
+        </div>
+        
+        <div class="graph-block">
+            <canvas id="graph2" class="graph"></canvas>
+            <div class="dropdown-container">
+                <select id="dropdown2" class="dropdown">
+                    <option value="">Seleccione</option>
+                    <option value="constante">Constante</option>
+                    <option value="lineal">Lineal</option>
+                    <option value="proporcional">Proporcional</option>
+                    <option value="cuadratica">Cuadrática</option>
+                    <option value="inversa">Inversa</option>
+                </select>
+                <span id="check2" class="check-icon"></span>
+            </div>
+        </div>
+        
+        <div class="graph-block">
+            <canvas id="graph3" class="graph"></canvas>
+            <div class="dropdown-container">
+                <select id="dropdown3" class="dropdown">
+                    <option value="">Seleccione</option>
+                    <option value="constante">Constante</option>
+                    <option value="lineal">Lineal</option>
+                    <option value="proporcional">Proporcional</option>
+                    <option value="cuadratica">Cuadrática</option>
+                    <option value="inversa">Inversa</option>
+                </select>
+                <span id="check3" class="check-icon"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="result">
+        <button id="checkButton" style="display:none;" onclick="checkAnswers()">Comprobar</button>
+        <p id="score"></p>
+        <button id="newExercise" style="display:none;" onclick="newExercise()">Otro ejercicio</button>
+    </div>
+
+    <script>
+        let score = 0;
+        const graphColors = ["red", "blue", "green"];
+        const dependencies = ["constante", "lineal", "proporcional", "cuadratica", "inversa"];
+        let selectedDependencies = [];
+
+        window.onload = function() {
+            drawGraphs();
+        };
+
+        function drawGraphs() {
+            selectedDependencies = [];
+            const canvases = [document.getElementById("graph1"), document.getElementById("graph2"), document.getElementById("graph3")];
+
+            // Sortear 3 dependencias diferentes al azar
+            const shuffledDependencies = [...dependencies].sort(() => 0.5 - Math.random()).slice(0, 3);
+
+            canvases.forEach((canvas, index) => {
+                const ctx = canvas.getContext("2d");
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = graphColors[index];
+                selectedDependencies.push(shuffledDependencies[index]);
+                drawGraph(ctx, shuffledDependencies[index], canvas.width, canvas.height);
+            });
+
+            document.getElementById("checkButton").style.display = "none";
+            document.getElementById("newExercise").style.display = "none";
+            document.getElementById("score").textContent = "";
+        }
+
+        function drawGraph(ctx, dependency, width, height) {
+            // Dibujar ejes
+            ctx.beginPath();
+            ctx.moveTo(40, height - 20);
+            ctx.lineTo(width - 20, height - 20); // Eje X
+            ctx.moveTo(40, height - 20);
+            ctx.lineTo(40, 20); // Eje Y
+            ctx.stroke();
+
+            // Nombres de los ejes y unidades
+            ctx.font = "14px Arial";
+            ctx.fillText("Tiempo (s)", width / 2, height - 5); // Eje X
+            ctx.save();
+            ctx.translate(10, height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText("Posición (m)", 0, 0); // Eje Y
+            ctx.restore();
+
+            // Dibujar la función dependiendo de la relación
+            ctx.beginPath();
+            switch (dependency) {
+                case "constante":
+                    ctx.moveTo(40, height / 2);
+                    ctx.lineTo(width - 20, height / 2);
+                    break;
+                case "lineal":
+                    ctx.moveTo(40, height - 20);
+                    ctx.lineTo(width - 20, 40);
+                    break;
+                case "proporcional":
+                    ctx.moveTo(40, height - 20);
+                    ctx.lineTo(width - 20, 40);
+                    break;
+                case "cuadratica":
+                    ctx.moveTo(40, height - 20);
+                    ctx.quadraticCurveTo(width / 2, 40, width - 20, height - 20);
+                    break;
+                case "inversa":
+                    ctx.moveTo(40, height - 20);
+                    ctx.lineTo(width / 2, height / 2);
+                    ctx.lineTo(width - 20, height - 20);
+                    break;
+            }
+            ctx.stroke();
+        }
+
+        function checkAnswers() {
+            let correct = 0;
+
+            for (let i = 1; i <= 3; i++) {
+                const userAnswer = document.getElementById("dropdown" + i).value;
+                const checkIcon = document.getElementById("check" + i);
+                if (userAnswer === selectedDependencies[i - 1]) {
+                    correct++;
+                    checkIcon.textContent = "✔️";
+                    checkIcon.style.color = "green";
+                } else {
+                    checkIcon.textContent = "❌";
+                    checkIcon.style.color = "red";
+                }
+            }
+
+            score += correct;
+            score -= (3 - correct);
+
+            document.getElementById("score").textContent = "Puntuación: " + score;
+
+            if (score < 10) {
+                document.getElementById("newExercise").style.display = "block";
+            } else {
+                document.getElementById("score").textContent += " ¡Has superado los 10 puntos!";
+            }
+        }
+
+        function newExercise() {
+            drawGraphs();
+            resetDropdowns();
+        }
+
+        function resetDropdowns() {
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById("dropdown" + i).value = "";
+                document.getElementById("check" + i).textContent = "";
+            }
+            document.getElementById("checkButton").style.display = "none";
+        }
+
+        // Mostrar el botón "Comprobar" cuando todos los desplegables tienen una selección
+        document.querySelectorAll("select").forEach(select => {
+            select.addEventListener("change", () => {
+                if (document.getElementById("dropdown1").value && document.getElementById("dropdown2").value && document.getElementById("dropdown3").value) {
+                    document.getElementById("checkButton").style.display = "block";
+                }
+            });
+        });
+    </script>
+</body>
+</html>

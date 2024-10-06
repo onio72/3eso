@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cambio de Unidades</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        input {
+            padding: 10px;
+            margin: 5px;
+            font-size: 1.2em;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+        #steps {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cambio de Unidades - Factores de Conversión</h1>
+    
+    <div>
+        <label for="quantity">Cantidad Inicial:</label>
+        <input type="number" id="quantity" placeholder="Ej: 3.5">
+    </div>
+    
+    <div>
+        <label for="initialUnit">Unidad Inicial:</label>
+        <input type="text" id="initialUnit" placeholder="Ej: km">
+    </div>
+    
+    <div>
+        <label for="finalUnit">Unidad Final:</label>
+        <input type="text" id="finalUnit" placeholder="Ej: m">
+    </div>
+    
+    <div>
+        <button onclick="startConversion()">Comenzar Conversión</button>
+        <button onclick="previousStep()">Retroceder</button>
+        <button onclick="nextStep()">Avanzar</button>
+        <button onclick="reset()">Reiniciar</button>
+        <button onclick="play()">Play</button>
+        <button onclick="pause()">Pausa</button>
+    </div>
+    
+    <div id="steps">
+        <p id="step1"></p>
+        <p id="step2"></p>
+        <p id="step3"></p>
+        <p id="step4"></p>
+        <p id="result"></p>
+    </div>
+
+    <script>
+        let step = 0;
+        let stepsData = [];
+        let conversionFactor;
+        let currentValue;
+        let interval;
+
+        // Mapa de conversiones comunes (aumenta este mapa con las conversiones que necesites)
+        const conversionMap = {
+            'km_m': 1000, // 1 km = 1000 m
+            'm_km': 0.001, // 1 m = 0.001 km
+            'mg_g': 0.001, // 1 mg = 0.001 g
+            'g_mg': 1000, // 1 g = 1000 mg
+            'cm_m': 0.01, // 1 cm = 0.01 m
+            'm_cm': 100, // 1 m = 100 cm
+            // Añadir más conversiones según se necesite
+        };
+
+        function startConversion() {
+            let quantity = parseFloat(document.getElementById("quantity").value);
+            let initialUnit = document.getElementById("initialUnit").value;
+            let finalUnit = document.getElementById("finalUnit").value;
+            currentValue = quantity;
+
+            let conversionKey = `${initialUnit}_${finalUnit}`;
+            conversionFactor = conversionMap[conversionKey];
+
+            if (!conversionFactor) {
+                alert("Conversión no disponible. Asegúrate de que las unidades estén correctas.");
+                return;
+            }
+
+            stepsData = [
+                `Paso 1: Comenzamos con ${quantity} ${initialUnit}.`,
+                `Paso 2: Usamos el factor de conversión: 1 ${initialUnit} = ${conversionFactor} ${finalUnit}.`,
+                `Paso 3: Multiplicamos ${quantity} por el factor de conversión.`,
+                `Paso 4: Resultado: ${quantity} ${initialUnit} * ${conversionFactor} = ${quantity * conversionFactor} ${finalUnit}.`
+            ];
+
+            showStep();
+        }
+
+        function showStep() {
+            document.getElementById("step1").innerText = stepsData[0];
+            document.getElementById("step2").innerText = "";
+            document.getElementById("step3").innerText = "";
+            document.getElementById("step4").innerText = "";
+            document.getElementById("result").innerText = "Resultado: (Pendiente de cálculo)";
+            step = 0;
+        }
+
+        function nextStep() {
+            if (step < stepsData.length) {
+                step++;
+                document.getElementById(`step${step}`).innerText = stepsData[step - 1];
+
+                if (step === 3) {
+                    // Realiza la multiplicación en el paso 3
+                    currentValue *= conversionFactor;
+                }
+                if (step === 4) {
+                    // Muestra el resultado final en el último paso
+                    document.getElementById("result").innerText = `Resultado final: ${currentValue} ${document.getElementById("finalUnit").value}`;
+                }
+            }
+        }
+
+        function previousStep() {
+            if (step > 0) {
+                document.getElementById(`step${step}`).innerText = "";
+                step--;
+            }
+        }
+
+        function reset() {
+            step = 0;
+            currentValue = parseFloat(document.getElementById("quantity").value);
+            showStep();
+        }
+
+        function play() {
+            interval = setInterval(nextStep, 1000);
+        }
+
+        function pause() {
+            clearInterval(interval);
+        }
+    </script>
+</body>
+</html>

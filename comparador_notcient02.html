@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparar Cantidades</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+
+        #exercise {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .number-box {
+            border: 1px solid #ccc;
+            padding: 20px;
+            width: 200px;
+            text-align: center;
+        }
+
+        .number-box input[type="checkbox"] {
+            margin-top: 10px;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        #controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #counter {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Comparar Cantidades</h1>
+
+    <div id="exercise">
+        <div class="number-box" id="number1-box">
+            <p id="number1">5.00 μg</p>
+            <input type="checkbox" id="check1" onclick="checkSelected(1)">
+        </div>
+
+        <div class="number-box" id="number2-box">
+            <p id="number2">2.10^-3 kg</p>
+            <input type="checkbox" id="check2" onclick="checkSelected(2)">
+        </div>
+    </div>
+
+    <div id="controls">
+        <button id="check-answer" onclick="checkAnswer()" style="display: none;">Comprobar</button>
+        <button id="new-exercise" onclick="newExercise()" style="display: none;">Otro ejercicio</button>
+    </div>
+
+    <div id="result"></div>
+
+    <div id="counter">
+        <p>Aciertos: <span id="correct-counter">0</span></p>
+        <p>Errores: <span id="wrong-counter">0</span></p>
+    </div>
+
+    <script>
+        let correctAnswer = 1;
+        let correctCounter = 0;
+        let wrongCounter = 0;
+
+        const units = ['g', 'kg', 's', 'm', 'μg'];
+        const prefixes = {
+            "μ": 1e-6,
+            "m": 1e-3,
+            "": 1,
+            "k": 1e3,
+            "M": 1e6
+        };
+
+        // Función para gestionar la selección
+        function checkSelected(selected) {
+            document.getElementById('check1').checked = (selected === 1);
+            document.getElementById('check2').checked = (selected === 2);
+            document.getElementById('check-answer').style.display = 'block';
+        }
+
+        // Función para comprobar la respuesta
+        function checkAnswer() {
+            let selected = document.getElementById('check1').checked ? 1 : 2;
+            let resultText = '';
+            if (selected === correctAnswer) {
+                resultText = '¡Correcto! El número mayor es ' + (correctAnswer === 1 ? document.getElementById('number1').textContent : document.getElementById('number2').textContent) + '.';
+                correctCounter++;
+            } else {
+                resultText = 'Incorrecto. El número mayor es ' + (correctAnswer === 1 ? document.getElementById('number1').textContent : document.getElementById('number2').textContent) + '.';
+                wrongCounter++;
+            }
+            document.getElementById('result').textContent = resultText;
+            document.getElementById('correct-counter').textContent = correctCounter;
+            document.getElementById('wrong-counter').textContent = wrongCounter;
+            document.getElementById('new-exercise').style.display = 'block';
+        }
+
+        // Función para generar un nuevo ejercicio
+        function newExercise() {
+            document.getElementById('result').textContent = '';
+            document.getElementById('check-answer').style.display = 'none';
+            document.getElementById('new-exercise').style.display = 'none';
+            generateNumbers();
+        }
+
+        // Función para generar dos números en notación científica o con prefijos del SI
+        function generateNumbers() {
+            let value1 = randomScientificValue();
+            let value2 = randomScientificValue();
+            correctAnswer = value1.realValue > value2.realValue ? 1 : 2;
+
+            document.getElementById('number1').textContent = value1.display + ' ' + value1.unit;
+            document.getElementById('number2').textContent = value2.display + ' ' + value2.unit;
+
+            document.getElementById('check1').checked = false;
+            document.getElementById('check2').checked = false;
+        }
+
+        // Función para generar un número en notación científica o con prefijos
+        function randomScientificValue() {
+            let baseValue = (Math.random() * 9 + 1).toFixed(2);  // Base entre 1 y 10
+            let exponent = Math.floor(Math.random() * 7) - 3;    // Exponente entre -3 y +3
+            let unit = units[Math.floor(Math.random() * units.length)];
+            let prefix = Object.keys(prefixes)[Math.floor(Math.random() * 5)]; // Prefijo aleatorio
+
+            let realValue = baseValue * Math.pow(10, exponent) * prefixes[prefix]; // Valor real en base a prefijo y exponente
+
+            return {
+                display: baseValue + '·10^' + exponent,
+                realValue: realValue,
+                unit: prefix + unit
+            };
+        }
+
+        // Inicializar ejercicio
+        window.onload = function() {
+            generateNumbers();
+        };
+    </script>
+
+</body>
+</html>

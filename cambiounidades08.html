@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversión de Unidades</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        .container {
+            margin: 20px auto;
+            max-width: 600px;
+        }
+        .result {
+            font-size: 1.5em;
+            margin-top: 20px;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 1.1em;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Conversión de Unidades</h1>
+        <p id="enunciado">Convierte:</p>
+        <div class="result hidden" id="resultado">
+            <p id="solucion"></p>
+        </div>
+        <button id="nuevoCaso">Otro caso</button>
+        <button id="mostrarSolucion" class="hidden">Muestra solución</button>
+    </div>
+
+    <script>
+        const prefijos = ["Tera", "Giga", "Mega", "kilo", "hecto", "deca", "unidad", "deci", "centi", "mili", "micro", "nano", "pico"];
+        const abreviaturas = ["T", "G", "M", "k", "h", "da", "", "d", "c", "m", "µ", "n", "p"];
+        const exponentes = [12, 9, 6, 3, 2, 1, 0, -1, -2, -3, -6, -9, -12];
+
+        // Lista de magnitudes y abreviaturas, incluyendo litros
+        const magnitudes = ["Tiempo", "Masa", "Longitud", "Superficie", "Volumen"];
+        const unidades = ["s", "g", "m", "m²", "m³", "L"];  // L para litros, m³ para metros cúbicos
+
+        let cantidadAleatoria, exponenteOrigen, exponenteDestino, resultadoFinal, unidadDestino, abreviaturaDestino;
+
+        function generarNuevoCaso() {
+            // Ocultar el resultado de la solución
+            document.getElementById('resultado').classList.add('hidden');
+            document.getElementById('mostrarSolucion').classList.remove('hidden');
+
+            // Generar cantidad aleatoria
+            cantidadAleatoria = Math.floor(Math.random() * 99) + 1;
+            
+            // Seleccionar prefijo de origen y destino sin que coincidan
+            const indiceOrigen = Math.floor(Math.random() * prefijos.length);
+            let indiceDestino;
+            do {
+                indiceDestino = Math.floor(Math.random() * prefijos.length);
+            } while (indiceDestino === indiceOrigen);
+
+            // Seleccionar una magnitud aleatoria
+            const indiceMagnitud = Math.floor(Math.random() * magnitudes.length);
+            
+            // Evitar la preferencia por otras magnitudes y aumentar la probabilidad de volumen
+            if (indiceMagnitud === 4 || Math.random() < 0.4) {  // 40% probabilidad de ser volumen
+                unidadDestino = "L";  // Litros
+            } else {
+                unidadDestino = unidades[indiceMagnitud];
+            }
+
+            // Obtener exponentes y unidades de destino
+            exponenteOrigen = exponentes[indiceOrigen];
+            exponenteDestino = exponentes[indiceDestino];
+            abreviaturaDestino = abreviaturas[indiceDestino];
+
+            // Crear el enunciado con la unidad correcta
+            const enunciado = `Convierte ${cantidadAleatoria} ${abreviaturas[indiceOrigen]}${unidadDestino} a ${abreviaturaDestino}${unidadDestino}`;
+            document.getElementById('enunciado').innerText = enunciado;
+
+            // Calcular el factor de conversión
+            let factorConversion;
+            if (unidadDestino === "m²") {
+                // En superficies el factor se eleva al cuadrado
+                factorConversion = Math.pow(10, 2 * (exponenteDestino - exponenteOrigen));
+            } else if (unidadDestino === "m³" || unidadDestino === "L") {
+                // En volúmenes o litros, el factor se eleva al cubo
+                factorConversion = Math.pow(10, 3 * (exponenteDestino - exponenteOrigen));
+            } else {
+                // Para el resto de las magnitudes
+                factorConversion = Math.pow(10, exponenteDestino - exponenteOrigen);
+            }
+
+            // Calcular el resultado final
+            resultadoFinal = cantidadAleatoria * factorConversion;
+        }
+
+        function truncarDecimales(numero) {
+            if (numero === Math.floor(numero)) {
+                // Si es un número entero, no mostrar decimales
+                return numero.toString();
+            }
+            // Truncar a 6 decimales sin ceros innecesarios
+            return (Math.trunc(numero * 1000000) / 1000000).toString();
+        }
+
+        function mostrarSolucion() {
+            // Calcular mantisa y exponente si el número es muy pequeño
+            const mantisa = resultadoFinal / Math.pow(10, Math.floor(Math.log10(Math.abs(resultadoFinal))));
+            const exponenteCientifico = Math.floor(Math.log10(Math.abs(resultadoFinal)));
+            const resultadoTexto = (Math.abs(resultadoFinal) < 0.0001) 
+                ? `${truncarDecimales(mantisa)} × 10^${exponenteCientifico}` 
+                : truncarDecimales(resultadoFinal);
+
+            // Mostrar la solución con la unidad de destino y en el formato correcto
+            document.getElementById('solucion').innerHTML = `La solución es: ${resultadoTexto} ${abreviaturaDestino}${unidadDestino}`;
+            document.getElementById('resultado').classList.remove('hidden');
+            document.getElementById('mostrarSolucion').classList.add('hidden');
+        }
+
+        document.getElementById('nuevoCaso').addEventListener('click', generarNuevoCaso);
+        document.getElementById('mostrarSolucion').addEventListener('click', mostrarSolucion);
+
+        // Generar el primer caso al cargar la página
+        generarNuevoCaso();
+    </script>
+</body>
+</html>

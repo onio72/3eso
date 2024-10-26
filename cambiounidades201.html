@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversión de Unidades - Ayuda para Alumnos</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <h1>Conversión de Unidades - Ayuda para Alumnos de Física y Química</h1>
+    <p>Selecciona el nivel de dificultad (1-10) y luego resuelve el ejercicio propuesto. Puedes pedir pistas para ayudarte en el proceso, pero la puntuación disminuirá según el número de pistas solicitadas.</p>
+
+    <div id="difficulty-selection">
+        <label for="difficulty">Nivel de dificultad:</label>
+        <select id="difficulty" name="difficulty">
+            <option value="">Selecciona un nivel</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+        </select>
+        <button onclick="generateExercise()">Generar Ejercicio</button>
+    </div>
+
+    <div id="exercise-container" style="display: none;">
+        <h2>Ejercicio de Conversión de Unidades</h2>
+        <p id="exercise-statement"></p>
+
+        <div id="response-section">
+            <label for="answer">Respuesta:</label>
+            <input type="text" id="answer" name="answer">
+            <button onclick="checkAnswer()">Comprobar Respuesta</button>
+        </div>
+
+        <div id="hints-container">
+            <button onclick="requestHint()">Pedir una Pista</button>
+            <div id="hints"></div>
+        </div>
+    </div>
+
+    <div id="score-container" style="display: none;">
+        <h2>Puntuación</h2>
+        <p id="score"></p>
+    </div>
+
+    <div id="summary-container" style="display: none;">
+        <h2>Resumen de Puntuación</h2>
+        <p id="total-score"></p>
+        <button onclick="resetExercise()">Reiniciar</button>
+    </div>
+</body>
+</html>

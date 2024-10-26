@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversión de Unidades - Ayuda para Alumnos</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <h1>Conversión de Unidades - Ayuda para Alumnos de Física y Química</h1>
+    <p>Selecciona el nivel de dificultad (1-10) y luego resuelve el ejercicio propuesto. Puedes pedir pistas para ayudarte en el proceso, pero la puntuación disminuirá según el número de pistas solicitadas.</p>
+
+    <div id="difficulty-selection">
+        <label for="difficulty">Nivel de dificultad:</label>
+        <select id="difficulty" name="difficulty">
+            <option value="">Selecciona un nivel</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+        </select>
+        <button onclick="generateExercise()">Generar Ejercicio</button>
+    </div>
+
+    <div id="exercise-container" style="display: none;">
+        <h2>Ejercicio de Conversión de Unidades</h2>
+        <p id="exercise-statement"></p>
+
+        <div id="response-section">
+            <label for="answer">Respuesta:</label>
+            <input type="text" id="answer" name="answer" placeholder="Ingresa tu respuesta">
+            <button onclick="checkAnswer()">Comprobar Respuesta</button>
+        </div>
+
+        <div id="hints-container">
+            <button onclick="requestHint()">Pedir una Pista</button>
+            <div id="hints"></div>
+        </div>
+    </div>
+
+    <div id="score-container" style="display: none;">
+        <h2>Puntuación</h2>
+        <p id="score"></p>
+    </div>
+
+    <div id="summary-container" style="display: none;">
+        <h2>Resumen de Puntuación</h2>
+        <p id="total-score"></p>
+        <button onclick="resetExercise()">Reiniciar</button>
+    </div>
+
+    <script>
+        let score = 0;
+        let hintsUsed = 0;
+        let currentExercise = null;
+
+        const conversionTypes = {
+            1: { type: 'basic', units: ['mass', 'length', 'time'], range: { max: 'mega', min: 'micro' } },
+            2: { type: 'advanced', units: ['mass', 'length', 'time'], range: { max: 'tera', min: 'pico' } },
+            3: { type: 'time', units: ['time'], special: true },
+            4: { type: 'basic', units: ['area'], range: { max: 'mega', min: 'micro' } },
+            5: { type: 'advanced', units: ['area'], range: { max: 'tera', min: 'pico' } },
+            6: { type: 'basic', units: ['volume'], range: { max: 'mega', min: 'micro' } },
+            7: { type: 'advanced', units: ['volume'], range: { max: 'tera', min: 'pico' } },
+            8: { type: 'volume-mixed', units: ['volume'], special: true },
+            9: { type: 'speed', units: ['speed'], special: true },
+            10: { type: 'density', units: ['density'], special: true }
+        };
+
+        function generateExercise() {
+            const level = document.getElementById('difficulty').value;
+            if (!level) {
+                alert('Por favor, selecciona un nivel de dificultad.');
+                return;
+            }
+            const config = conversionTypes[level];
+            let fromUnit, toUnit, value;
+            if (config.special) {
+                const conversions = specialConversions[config.type];
+                const units = Object.keys(conversions);
+                fromUnit = units[Math.floor(Math.random() * units.length)];
+                do {
+                    toUnit = units[Math.floor(Math.random() * units.length)];
+                } while (toUnit === fromUnit);
+                value = (Math.random() * 900 + 100).toFixed(2);
+            } else {
+                const units = config.units;
+                fromUnit = units[Math.floor(Math.random() * units.length)];
+                toUnit = units[Math.floor(Math.random() * units.length)];
+                value = (Math.random() * 900 + 100).toFixed(2);
+            }
+
+            currentExercise = { fromUnit, toUnit, value, level };
+            hintsUsed = 0;
+
+            document.getElementById('exercise-container').style.display = 'block';
+            document.getElementById('exercise-statement').innerText = `Convierte ${value} ${fromUnit} a ${toUnit}`;
+        }
+
+        function checkAnswer() {
+            const userAnswer = document.getElementById('answer').value;
+            if (!userAnswer) {
+                alert('Por favor, ingresa una respuesta.');
+                return;
+            }
+
+            const correctAnswer = calculateAnswer(currentExercise);
+            if (Math.abs(userAnswer - correctAnswer) < 0.01) {
+                alert('¡Correcto!');
+                let points = 1;
+                if (hintsUsed === 1) points = 0.5;
+                if (hintsUsed === 2) points = 0.25;
+                score += points;
+            } else {
+                alert('Respuesta incorrecta. Inténtalo de nuevo.');
+            }
+            updateScore();
+        }
+
+        function requestHint() {
+            if (hintsUsed < 2) {
+                hintsUsed++;
+                const hintMessage = hintsUsed === 1 ? 'Pista: Recuerda el factor de conversión.' : 'Pista avanzada: Observa el numerador y denominador del factor.';
+                const hintsDiv = document.getElementById('hints');
+                const hintElement = document.createElement('p');
+                hintElement.innerText = hintMessage;
+                hintsDiv.appendChild(hintElement);
+            }
+        }
+
+        function calculateAnswer(exercise) {
+            // Lógica simplificada para calcular la respuesta correcta
+            return (exercise.value * Math.random()).toFixed(2);
+        }
+
+        function updateScore() {
+            document.getElementById('score-container').style.display = 'block';
+            document.getElementById('score').innerText = `Puntuación: ${score.toFixed(2)}`;
+        }
+
+        function resetExercise() {
+            score = 0;
+            hintsUsed = 0;
+            currentExercise = null;
+            document.getElementById('exercise-container').style.display = 'none';
+            document.getElementById('score-container').style.display = 'none';
+            document.getElementById('summary-container').style.display = 'none';
+            document.getElementById('hints').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
